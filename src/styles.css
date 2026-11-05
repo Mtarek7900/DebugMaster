@@ -290,3 +290,30 @@ code {
 .console-error {
   color: var(--fail);
 }
+
+.check-kind {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-solved {
+  color: var(--pass);
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.solved-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--pass-bg);
+  color: var(--pass);
+  font-weight: 600;
+}
+
+.walkthrough {
+  grid-column: 1 / -1;
+}

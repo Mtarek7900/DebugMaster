@@ -5,10 +5,13 @@ interface ResultsPanelProps {
   running: boolean;
 }
 
-/** Shows each check's name, whether it passed, and expected versus actual on failure. */
+/**
+ * Shows each check's name, whether it is Visible or Hidden, whether it passed, and
+ * expected versus actual on failure. A check's code is never shown.
+ */
 export function ResultsPanel({ result, running }: ResultsPanelProps) {
   if (running) return <p className="results-empty">Running…</p>;
-  if (!result) return <p className="results-empty">Press Run to run the Visible Checks against your code.</p>;
+  if (!result) return <p className="results-empty">Press Run to run the Visible Checks against your code, or Submit to run every Visible and Hidden Check.</p>;
 
   const passedCount = result.checks.filter((c) => c.passed).length;
   return (
@@ -35,6 +38,7 @@ export function ResultsPanel({ result, running }: ResultsPanelProps) {
             <div className="check-heading">
               <span className="check-status">{check.passed ? 'Passed' : 'Failed'}</span>
               <span className="check-name">{check.name}</span>
+              <span className={`check-kind check-kind-${check.kind}`}>{check.kind === 'hidden' ? 'Hidden' : 'Visible'}</span>
             </div>
             {!check.passed && (
               <div className="check-detail">

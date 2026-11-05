@@ -116,6 +116,47 @@ describe('runChallenge in run mode', () => {
   });
 });
 
+describe('runChallenge in submit mode', () => {
+  it('runs every Visible Check and then every Hidden Check, each marked with its kind', async () => {
+    const result = await runChallenge(addChallenge, brokenAdd, 'submit');
+
+    expect(result.outcome).toBe('completed');
+    expect(result.checks.map((c) => [c.name, c.kind, c.passed])).toEqual([
+      ['adds two positive numbers', 'visible', false],
+      ['adding zero changes nothing', 'visible', true],
+      ['adds negative numbers', 'hidden', false],
+    ]);
+  });
+
+  it('reports the expected and actual values of a failed Hidden Check', async () => {
+    const result = await runChallenge(addChallenge, brokenAdd, 'submit');
+
+    expect(result.checks[2]).toMatchObject({ kind: 'hidden', passed: false, expected: '-5', actual: '1' });
+  });
+
+  it('rejects a fix that hard-codes the Visible Checks', async () => {
+    const hardCoded = `export function add(a, b) {
+  if (a === 2 && b === 3) return 5;
+  return a;
+}
+`;
+
+    const run = await runChallenge(addChallenge, hardCoded, 'run');
+    const submit = await runChallenge(addChallenge, hardCoded, 'submit');
+
+    expect(run.checks.every((c) => c.passed)).toBe(true);
+    expect(submit.checks.filter((c) => !c.passed).map((c) => c.name)).toEqual(['adds negative numbers']);
+  });
+
+  it('passes every check for a real fix', async () => {
+    const result = await runChallenge(addChallenge, 'export const add = (a, b) => a + b;', 'submit');
+
+    expect(result.outcome).toBe('completed');
+    expect(result.checks).toHaveLength(3);
+    expect(result.checks.every((c) => c.passed)).toBe(true);
+  });
+});
+
 describe('runChallenge console capture', () => {
   it("captures the Learner's console output in order, with objects and arrays readable", async () => {
     const challenge = {

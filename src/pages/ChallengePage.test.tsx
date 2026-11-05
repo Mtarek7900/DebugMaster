@@ -1,12 +1,17 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Challenge } from '../catalog/challenge';
-import type { Runner } from '../runner/runner';
+import { createProgressStore, type ProgressStore } from '../progress/progressStore';
+import type { CheckResult, Runner } from '../runner/runner';
 import { ChallengePage } from './ChallengePage';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  localStorage.clear();
+});
 
 const challenge: Challenge = {
   id: 'cart-total',
@@ -115,5 +120,145 @@ describe('ChallengePage', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/timed out/i);
     expect(alert.textContent).toMatch(/infinite loop/i);
+  });
+});
+
+const passingSubmit: Runner = async (_challenge, _code, mode) => ({
+  outcome: 'completed',
+  checks: [
+    { name: 'sums items', kind: 'visible', passed: true },
+    ...(mode === 'submit' ? [{ name: 'hidden one', kind: 'hidden' as const, passed: true }] : []),
+  ],
+  console: [],
+});
+
+describe('ChallengePage Submit', () => {
+  // A fresh store per test, so no progress kept in memory leaks from one test into the next.
+  let progress: ProgressStore;
+  beforeEach(() => {
+    progress = createProgressStore();
+  });
+
+  it('Submit runs the code in submit mode; when every check passes it shows success and opens the Walkthrough', async () => {
+    const runner = vi.fn(passingSubmit);
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(runner).toHaveBeenCalledWith(challenge, challenge.brokenCode, 'submit');
+    expect((await screen.findByRole('status')).textContent).toMatch(/solved/i);
+    expect(screen.getByRole('region', { name: 'Walkthrough' }).textContent).toContain('Walkthrough text');
+  });
+
+  it("shows a failed Hidden Check's name and expected/actual values but not its code, and does not solve", async () => {
+    const hiddenFailure: CheckResult = {
+      name: 'handles negative prices',
+      kind: 'hidden',
+      passed: false,
+      message: 'Expected values to be identical',
+      expected: '-5',
+      actual: '5',
+    };
+    const runner: Runner = vi.fn(async () => ({
+      outcome: 'completed' as const,
+      checks: [{ name: 'sums items', kind: 'visible' as const, passed: true }, hiddenFailure],
+      console: [],
+    }));
+    const secretChallenge = { ...challenge, hiddenChecks: "check('handles negative prices', () => { expect(total([{ price: -5 }])).toBe(-5); })" };
+    render(<ChallengePage challenge={secretChallenge} runner={runner} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    const results = await screen.findByRole('list', { name: 'Check results' });
+    const hidden = within(results).getAllByRole('listitem')[1];
+    expect(hidden.textContent).toContain('handles negative prices');
+    expect(hidden.textContent).toContain('Hidden');
+    expect(hidden.textContent).toContain('Failed');
+    expect(within(hidden).getByText('-5')).toBeTruthy();
+    expect(within(hidden).getByText('5')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('price: -5');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
+  });
+
+  it('keeps the Challenge Solved, with the Walkthrough open, after the page is reopened', async () => {
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('status');
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    expect(screen.getByText('Solved')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+  });
+
+  it('does not count a Run that passes every Visible Check as Solved', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    await screen.findByRole('list', { name: 'Check results' });
+
+    expect(screen.queryByText('Solved')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
+  });
+
+  it('still runs, submits and shows Solved for the session when browser storage throws', async () => {
+    const blocked = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+    const runner = vi.fn(passingSubmit);
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    expect(screen.queryByText('Solved')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    await screen.findByRole('list', { name: 'Check results' });
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toMatch(/solved/i);
+    expect(screen.getByText('Solved')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+  });
+
+  it('works when even reaching browser storage throws', async () => {
+    vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('Access is denied for this document.', 'SecurityError');
+    });
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toMatch(/solved/i);
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+  });
+
+  it('keeps Solved for the session when storage can be read but not written', async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    });
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('status');
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    expect(screen.getByText('Solved')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+  });
+
+  it('does not announce Solved when a Revealed Challenge passes every check', async () => {
+    localStorage.setItem('debugmaster:progress:cart-total', JSON.stringify({ status: 'revealed' }));
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByText('2 of 2 checks passed');
+
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByText('Revealed')).toBeTruthy();
   });
 });
