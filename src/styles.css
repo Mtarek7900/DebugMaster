@@ -1,0 +1,249 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1c2128;
+  --muted: #5b6573;
+  --border: #d9dde3;
+  --accent: #2f6feb;
+  --accent-text: #ffffff;
+  --pass: #1a7f37;
+  --pass-bg: #e8f5ec;
+  --fail: #c62828;
+  --fail-bg: #fdecec;
+  --code-bg: #f0f2f5;
+  --radius: 8px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1216;
+    --surface: #171b21;
+    --text: #e6e9ee;
+    --muted: #9aa4b1;
+    --border: #2c333d;
+    --accent: #4c8dff;
+    --pass: #4ac26b;
+    --pass-bg: #12261a;
+    --fail: #ff7b72;
+    --fail-bg: #2d1517;
+    --code-bg: #20262e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--code-bg);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
+
+.site-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.challenge-page {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .challenge-page {
+    grid-template-columns: minmax(280px, 2fr) 3fr;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-width: 0;
+}
+
+.panel h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.panel h2 {
+  margin: 16px 0 8px;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.labels {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.label {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.difficulty-easy {
+  color: var(--pass);
+  border-color: currentColor;
+}
+
+.prose pre {
+  background: var(--code-bg);
+  padding: 12px;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+.code-editor {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.code-editor .cm-editor {
+  max-height: 60vh;
+  font-size: 14px;
+}
+
+.code-editor .cm-scroller {
+  font-family: var(--mono);
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.button {
+  font: inherit;
+  padding: 8px 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.results-empty {
+  color: var(--muted);
+}
+
+.results-summary {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.results-error {
+  color: var(--fail);
+}
+
+.check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.check {
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  border-left: 4px solid;
+}
+
+.check-passed {
+  background: var(--pass-bg);
+  border-color: var(--pass);
+}
+
+.check-failed {
+  background: var(--fail-bg);
+  border-color: var(--fail);
+}
+
+.check-heading {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.check-status {
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 4.5em;
+}
+
+.check-passed .check-status {
+  color: var(--pass);
+}
+
+.check-failed .check-status {
+  color: var(--fail);
+}
+
+.check-detail {
+  margin-top: 6px;
+  overflow-x: auto;
+}
+
+.check-detail dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.check-detail dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.check-detail dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
