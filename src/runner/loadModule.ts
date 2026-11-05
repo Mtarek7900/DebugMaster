@@ -9,6 +9,8 @@
  * module semantics that matter to Challenges (strict mode, own scope) identical in
  * the browser worker and in Node tests.
  *
+ * `globals` (such as a captured `console`) are visible to the code as plain variables.
+ *
  * Supported: `export function`, `export async function`, `export function*`,
  * `export class`, `export const|let|var name`, and `export { a, b as c }`.
  */
@@ -18,7 +20,7 @@ const EXPORT_FUNCTION = /^(\s*)export\s+((?:async\s+)?function\s*\*?\s*([A-Za-z_
 const EXPORT_DECLARATION = /^(\s*)export\s+((?:class|const|let|var)\s+([A-Za-z_$][\w$]*))/gm;
 const EXPORT_LIST = /^(\s*)export\s*\{([^}]*)\}\s*;?/gm;
 
-export function loadModule(source: string): ModuleExports {
+export function loadModule(source: string, globals: Record<string, unknown> = {}): ModuleExports {
   const exported: Array<[exportName: string, localName: string]> = [];
 
   const stripExport = (_match: string, indent: string, declaration: string, name: string) => {
@@ -40,6 +42,9 @@ export function loadModule(source: string): ModuleExports {
     });
 
   const returned = exported.map(([name, local]) => `${JSON.stringify(name)}: ${local}`).join(', ');
-  const body = `"use strict";\n${rewritten}\n;return { ${returned} };`;
-  return new Function(body)() as ModuleExports;
+  // `globals` are parameters of an outer function, so they shadow the real globals of the same
+  // name, while the code runs in an inner function where it may still declare those names itself.
+  const body = `"use strict";\nreturn (function () {\n${rewritten}\n;return { ${returned} };\n})();`;
+  const names = Object.keys(globals);
+  return new Function(...names, body)(...names.map((n) => globals[n])) as ModuleExports;
 }

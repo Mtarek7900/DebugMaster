@@ -1,6 +1,9 @@
 import type { RunMode, RunnableChallenge, RunResult } from './runChallenge';
 
-export type { CheckResult, RunMode, RunnableChallenge, RunResult } from './runChallenge';
+export type { CheckResult, ConsoleEntry, ConsoleLevel, RunMode, RunnableChallenge, RunResult } from './runChallenge';
+
+/** How long a run may take before it is stopped and reported as timed out. */
+export const TIME_LIMIT_MS = 3000;
 
 /**
  * Runs a Challenge's checks against the Learner's code. Pages depend on this

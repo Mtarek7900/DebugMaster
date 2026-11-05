@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
 import { CodeEditor } from '../components/CodeEditor';
+import { ConsolePanel } from '../components/ConsolePanel';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
 import type { Runner, RunResult } from '../runner/runner';
@@ -45,6 +46,8 @@ export function ChallengePage({ challenge, runner }: ChallengePageProps) {
         </div>
         <h2>Results</h2>
         <ResultsPanel result={result} running={running} />
+        <h2>Console</h2>
+        <ConsolePanel entries={running ? null : (result?.console ?? null)} />
       </section>
     </main>
   );

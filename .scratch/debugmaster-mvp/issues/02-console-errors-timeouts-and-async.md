@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] The Runner result includes captured console output, in order, with objects and arrays formatted readably
-- [ ] The Runner result reports a "threw" outcome with the error message when the Learner's code or a check throws
-- [ ] The Runner reports a "timed out" outcome for code that runs past the time limit (about 3 seconds); in the browser the worker is terminated and a fresh one is used for the next Run
-- [ ] Async checks are awaited, and async failures are reported like synchronous ones
-- [ ] Runner tests in Node cover console capture, thrown errors, timeouts (the core runs in a worker thread or equivalent with a time limit) and async checks
-- [ ] The Challenge page shows a console panel and displays thrown-error and timed-out outcomes clearly
+- [x] The Runner result includes captured console output, in order, with objects and arrays formatted readably
+- [x] The Runner result reports a "threw" outcome with the error message when the Learner's code or a check throws
+- [x] The Runner reports a "timed out" outcome for code that runs past the time limit (about 3 seconds); in the browser the worker is terminated and a fresh one is used for the next Run
+- [x] Async checks are awaited, and async failures are reported like synchronous ones
+- [x] Runner tests in Node cover console capture, thrown errors, timeouts (the core runs in a worker thread or equivalent with a time limit) and async checks
+- [x] The Challenge page shows a console panel and displays thrown-error and timed-out outcomes clearly

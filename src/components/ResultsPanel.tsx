@@ -1,4 +1,4 @@
-import type { RunResult } from '../runner/runner';
+import { TIME_LIMIT_MS, type RunResult } from '../runner/runner';
 
 interface ResultsPanelProps {
   result: RunResult | null;
@@ -13,6 +13,12 @@ export function ResultsPanel({ result, running }: ResultsPanelProps) {
   const passedCount = result.checks.filter((c) => c.passed).length;
   return (
     <div className="results">
+      {result.outcome === 'timed-out' && (
+        <p className="results-error" role="alert">
+          Your code timed out: it ran for more than {TIME_LIMIT_MS / 1000} seconds and was stopped. Look for an infinite loop or a
+          promise that never settles.
+        </p>
+      )}
       {result.outcome === 'threw' && (
         <p className="results-error" role="alert">
           Your code threw an error: <code>{result.error}</code>

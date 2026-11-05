@@ -10,6 +10,7 @@
   --pass-bg: #e8f5ec;
   --fail: #c62828;
   --fail-bg: #fdecec;
+  --warn: #9a6700;
   --code-bg: #f0f2f5;
   --radius: 8px;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -29,6 +30,7 @@
     --pass-bg: #12261a;
     --fail: #ff7b72;
     --fail-bg: #2d1517;
+    --warn: #d29922;
     --code-bg: #20262e;
   }
 }
@@ -246,4 +248,45 @@ code {
 .check-detail dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.console {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.console-empty {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font);
+}
+
+.console-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.console-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.console-line:last-child {
+  border-bottom: none;
+}
+
+.console-warn {
+  color: var(--warn);
+}
+
+.console-error {
+  color: var(--fail);
 }
