@@ -8,7 +8,7 @@
  *
  * Each Challenge keeps its status and how many Hints were revealed.
  * Rules: Solved is recorded only when the status is not already Revealed;
- * Revealed is permanent once set; the Hint count never exceeds the Challenge's Hints.
+ * Revealed is recorded only for an unattempted Challenge and is permanent once set; the Hint count never exceeds the Challenge's Hints.
  */
 
 export type ChallengeStatus = 'unattempted' | 'solved' | 'revealed';
@@ -23,6 +23,8 @@ export interface ProgressStore {
   get(challengeId: string): ChallengeProgress;
   /** Call when a Submit passed every check. Leaves a Revealed Challenge Revealed; returns the progress afterwards. */
   recordSolved(challengeId: string): ChallengeProgress;
+  /** Call when the Learner confirms Give Up. Only an unattempted Challenge becomes Revealed; returns the progress afterwards. */
+  recordRevealed(challengeId: string): ChallengeProgress;
   /** Call when the Learner reveals their next Hint; never counts past `hintCount`. Returns the progress afterwards. */
   recordHintRevealed(challengeId: string, hintCount: number): ChallengeProgress;
 }
@@ -62,6 +64,14 @@ export function createProgressStore(): ProgressStore {
       const current = get(challengeId);
       if (current.status === 'revealed') return current;
       const next: ChallengeProgress = { ...current, status: 'solved' };
+      save(challengeId, next);
+      return next;
+    },
+    recordRevealed(challengeId) {
+      const current = get(challengeId);
+      // Revealed is permanent, and a Solved Challenge keeps its Solved.
+      if (current.status !== 'unattempted') return current;
+      const next: ChallengeProgress = { ...current, status: 'revealed' };
       save(challengeId, next);
       return next;
     },

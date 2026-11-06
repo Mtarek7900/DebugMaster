@@ -145,6 +145,7 @@ code {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
 }
@@ -163,6 +164,12 @@ code {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
+  font-weight: 600;
+}
+
+.button.danger {
+  border-color: var(--fail);
+  color: var(--fail);
   font-weight: 600;
 }
 
@@ -302,6 +309,44 @@ code {
 .status-solved {
   color: var(--pass);
   border-color: currentColor;
+  font-weight: 600;
+}
+
+.status-revealed {
+  color: var(--warn);
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.confirmation {
+  flex-basis: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--fail-bg);
+}
+
+.confirmation h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.confirmation p {
+  margin: 0 0 12px;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.passed-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  color: var(--text);
   font-weight: 600;
 }
 

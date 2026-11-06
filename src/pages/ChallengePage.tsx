@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
 import { CodeEditor } from '../components/CodeEditor';
+import { ConfirmButton } from '../components/ConfirmButton';
 import { ConsolePanel } from '../components/ConsolePanel';
 import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
@@ -23,27 +24,29 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
   const [initialProgress] = useState(() => progress.get(challenge.id));
   const [status, setStatus] = useState(initialProgress.status);
   const [hintsRevealed, setHintsRevealed] = useState(Math.min(initialProgress.hintsRevealed, challenge.hints.length));
-  /**
-   * Set when the latest Submit passed every check and so made the Challenge Solved:
-   * the Hints used for that solve, which later reveals do not change.
-   */
-  const [solvedWithHints, setSolvedWithHints] = useState<number | null>(null);
+  /** Set when the latest Submit passed every check: what that Submit meant for the Challenge. */
+  const [passedAll, setPassedAll] = useState<PassedAll | null>(null);
 
   function revealNextHint() {
     setHintsRevealed(progress.recordHintRevealed(challenge.id, challenge.hints.length).hintsRevealed);
   }
 
+  function giveUp() {
+    setPassedAll(null);
+    setStatus(progress.recordRevealed(challenge.id).status);
+  }
+
   async function start(mode: RunMode) {
     setRunning(true);
-    setSolvedWithHints(null);
+    setPassedAll(null);
     try {
       const next = await runner(challenge, code.current, mode);
       setResult(next);
       if (mode === 'submit' && passedEveryCheck(next)) {
         const newStatus = progress.recordSolved(challenge.id).status;
         setStatus(newStatus);
-        // A Revealed Challenge stays Revealed, so there is no Solved to announce.
-        if (newStatus === 'solved') setSolvedWithHints(hintsRevealed);
+        // A Revealed Challenge stays Revealed: announce that the checks pass, not Solved.
+        setPassedAll(newStatus === 'solved' ? { status: 'solved', hintsUsed: hintsRevealed } : { status: 'revealed' });
       }
     } finally {
       setRunning(false);
@@ -78,10 +81,28 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
           <button type="button" className="button primary" onClick={() => start('submit')} disabled={running}>
             Submit
           </button>
+          {status === 'unattempted' && (
+            <ConfirmButton
+              label="Give Up"
+              question="Give up?"
+              confirmLabel="Give up and show the Walkthrough"
+              cancelLabel="Keep trying"
+              onConfirm={giveUp}
+              disabled={running}
+            >
+              The Walkthrough will open and this Challenge will be marked Revealed for good. You can keep fixing it, but
+              it will never count as Solved.
+            </ConfirmButton>
+          )}
         </div>
-        {solvedWithHints !== null && (
+        {passedAll?.status === 'solved' && (
           <p className="solved-message" role="status">
-            Solved with {hintCount(solvedWithHints)}. Your fix passes every Visible and Hidden Check.
+            Solved with {hintCount(passedAll.hintsUsed)}. Your fix passes every Visible and Hidden Check.
+          </p>
+        )}
+        {passedAll?.status === 'revealed' && (
+          <p className="passed-message" role="status">
+            Your fix passes every Visible and Hidden Check. The Challenge stays Revealed because you gave up.
           </p>
         )}
         <h2>Results</h2>
@@ -99,6 +120,12 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
     </main>
   );
 }
+
+/**
+ * What a Submit that passed every check meant: Solved, with the Hints used for
+ * that solve (later reveals do not change it), or still Revealed after Give Up.
+ */
+type PassedAll = { status: 'solved'; hintsUsed: number } | { status: 'revealed' };
 
 function passedEveryCheck(result: RunResult): boolean {
   return result.outcome === 'completed' && result.checks.length > 0 && result.checks.every((c) => c.passed);

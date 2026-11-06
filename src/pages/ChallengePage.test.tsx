@@ -258,7 +258,7 @@ describe('ChallengePage Submit', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
     await screen.findByText('2 of 2 checks passed');
 
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status').textContent).not.toMatch(/Solved/);
     expect(screen.getByText('Revealed')).toBeTruthy();
   });
 });
@@ -380,5 +380,102 @@ describe('ChallengePage Hints', () => {
 
     expect((await screen.findByRole('status')).textContent).toContain('Solved with 3 Hints');
     expect(progress.get(challenge.id).hintsRevealed).toBe(3);
+  });
+});
+
+describe('ChallengePage Give Up', () => {
+  let progress: ProgressStore;
+  beforeEach(() => {
+    progress = createProgressStore();
+  });
+
+  async function giveUp() {
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Give up and show the Walkthrough' }));
+  }
+
+  it('asks for confirmation, and cancelling changes nothing', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    expect(confirmation.textContent).toMatch(/Revealed/);
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Keep trying' }));
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
+    expect(screen.queryByText('Revealed')).toBeNull();
+    expect(progress.get(challenge.id).status).toBe('unattempted');
+    expect(screen.getByRole('button', { name: 'Give Up' })).toBeTruthy();
+  });
+
+  it('confirming opens the Walkthrough and marks the Challenge Revealed', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await giveUp();
+
+    expect(screen.getByRole('region', { name: 'Walkthrough' }).textContent).toContain('Walkthrough text');
+    expect(screen.getByText('Revealed')).toBeTruthy();
+    expect(progress.get(challenge.id).status).toBe('revealed');
+    expect(screen.queryByRole('button', { name: 'Give Up' })).toBeNull();
+  });
+
+  it('still runs and submits after Give Up; a fully passing Submit says so but the Challenge stays Revealed', async () => {
+    const runner = vi.fn(passingSubmit);
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    await giveUp();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(await screen.findByText('1 of 1 checks passed')).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect(runner).toHaveBeenLastCalledWith(challenge, challenge.brokenCode, 'submit');
+    const message = (await screen.findByRole('status')).textContent;
+    expect(message).toContain('passes every Visible and Hidden Check');
+    expect(message).toContain('stays Revealed');
+    expect(message).not.toMatch(/Solved with/);
+    expect(screen.queryByText('Solved')).toBeNull();
+    expect(screen.getByText('Revealed')).toBeTruthy();
+    expect(progress.get(challenge.id).status).toBe('revealed');
+  });
+
+  it('keeps the Challenge Revealed, with the Walkthrough open, after a reload', async () => {
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await giveUp();
+    first.unmount();
+
+    // A new store reads only what the browser kept, as after a reload.
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+
+    expect(screen.getByText('Revealed')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Give Up' })).toBeNull();
+  });
+
+  it('does not offer Give Up once the Challenge is Solved', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    expect(screen.getByRole('button', { name: 'Give Up' })).toBeTruthy();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('status');
+
+    expect(screen.queryByRole('button', { name: 'Give Up' })).toBeNull();
+  });
+
+  it('marks the Challenge Revealed for the session when browser storage throws', async () => {
+    const blocked = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await giveUp();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    expect(screen.getByText('Revealed')).toBeTruthy();
   });
 });
