@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
 import { CodeEditor } from '../components/CodeEditor';
 import { ConfirmButton } from '../components/ConfirmButton';
@@ -18,7 +18,13 @@ interface ChallengePageProps {
 const STATUS_LABELS: Partial<Record<ChallengeStatus, string>> = { solved: 'Solved', revealed: 'Revealed' };
 
 export function ChallengePage({ challenge, runner, progress = browserProgressStore }: ChallengePageProps) {
-  const code = useRef(challenge.brokenCode);
+  /** The code the editor opens with; Reset swaps in the Broken Code and a fresh editor. */
+  const [editorStart, setEditorStart] = useState(() => ({
+    code: progress.getCode(challenge.id) ?? challenge.brokenCode,
+    resets: 0,
+  }));
+  const code = useRef(editorStart.code);
+  const autosave = useAutosave((next) => progress.saveCode(challenge.id, next));
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
   const [initialProgress] = useState(() => progress.get(challenge.id));
@@ -29,6 +35,14 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
 
   function revealNextHint() {
     setHintsRevealed(progress.recordHintRevealed(challenge.id, challenge.hints.length).hintsRevealed);
+  }
+
+  /** Rewrites only the code: the status and Hint count stay as they are. */
+  function resetCode() {
+    autosave.cancel();
+    progress.clearCode(challenge.id);
+    code.current = challenge.brokenCode;
+    setEditorStart((current) => ({ code: challenge.brokenCode, resets: current.resets + 1 }));
   }
 
   function giveUp() {
@@ -73,7 +87,14 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
       </section>
 
       <section className="panel workbench" aria-label="Your code">
-        <CodeEditor initialCode={challenge.brokenCode} onChange={(next) => (code.current = next)} />
+        <CodeEditor
+          key={editorStart.resets}
+          initialCode={editorStart.code}
+          onChange={(next) => {
+            code.current = next;
+            autosave.schedule(next);
+          }}
+        />
         <div className="toolbar">
           <button type="button" className="button" onClick={() => start('run')} disabled={running}>
             Run
@@ -94,6 +115,16 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
               it will never count as Solved.
             </ConfirmButton>
           )}
+          <ConfirmButton
+            label="Reset"
+            question="Reset your code?"
+            confirmLabel="Reset to the Broken Code"
+            cancelLabel="Keep my code"
+            onConfirm={resetCode}
+            disabled={running}
+          >
+            Your edits will be replaced by the original Broken Code. Your progress and revealed Hints stay as they are.
+          </ConfirmButton>
         </div>
         {passedAll?.status === 'solved' && (
           <p className="solved-message" role="status">
@@ -119,6 +150,47 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
       )}
     </main>
   );
+}
+
+const AUTOSAVE_DELAY_MS = 300;
+
+/**
+ * Saves the latest value once typing pauses, and on unmount or pagehide saves
+ * whatever is still waiting, so leaving the page never drops the last few keystrokes.
+ */
+function useAutosave(save: (value: string) => void) {
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  const [autosave] = useState(() => {
+    let pending: { value: string; timer: ReturnType<typeof setTimeout> } | null = null;
+    return {
+      schedule(value: string) {
+        if (pending) clearTimeout(pending.timer);
+        pending = { value, timer: setTimeout(() => autosave.flush(), AUTOSAVE_DELAY_MS) };
+      },
+      flush() {
+        if (!pending) return;
+        clearTimeout(pending.timer);
+        const { value } = pending;
+        pending = null;
+        saveRef.current(value);
+      },
+      cancel() {
+        if (pending) clearTimeout(pending.timer);
+        pending = null;
+      },
+    };
+  });
+  useEffect(() => {
+    // A reload or closed tab never unmounts React, so save on the way out too.
+    const flush = () => autosave.flush();
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, [autosave]);
+  return autosave;
 }
 
 /**

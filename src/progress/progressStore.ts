@@ -6,9 +6,11 @@
  * mode, blocked site data, a full quota), progress is kept in memory for the
  * rest of the session instead, and the site keeps working.
  *
- * Each Challenge keeps its status and how many Hints were revealed.
+ * Each Challenge keeps its status, how many Hints were revealed, and the
+ * Learner's current code (kept apart, since it changes with every keystroke).
  * Rules: Solved is recorded only when the status is not already Revealed;
- * Revealed is recorded only for an unattempted Challenge and is permanent once set; the Hint count never exceeds the Challenge's Hints.
+ * Revealed is recorded only for an unattempted Challenge and is permanent once set; the Hint count never exceeds the Challenge's Hints;
+ * saving or clearing code never touches the status or Hint count.
  */
 
 export type ChallengeStatus = 'unattempted' | 'solved' | 'revealed';
@@ -27,15 +29,24 @@ export interface ProgressStore {
   recordRevealed(challengeId: string): ChallengeProgress;
   /** Call when the Learner reveals their next Hint; never counts past `hintCount`. Returns the progress afterwards. */
   recordHintRevealed(challengeId: string, hintCount: number): ChallengeProgress;
+  /** The Learner's saved code for the Challenge, or null when they have none (start from the Broken Code). */
+  getCode(challengeId: string): string | null;
+  /** Call as the Learner edits; the code replaces any saved before. */
+  saveCode(challengeId: string, code: string): void;
+  /** Call on Reset: forgets the saved code, so the Challenge opens on its Broken Code again. */
+  clearCode(challengeId: string): void;
 }
 
 const KEY_PREFIX = 'debugmaster:progress:';
+const CODE_KEY_PREFIX = 'debugmaster:code:';
 const STATUSES: readonly ChallengeStatus[] = ['unattempted', 'solved', 'revealed'];
 const UNATTEMPTED: ChallengeProgress = { status: 'unattempted', hintsRevealed: 0 };
 
 export function createProgressStore(): ProgressStore {
   /** Progress that storage could not keep; it wins over storage for the rest of the session. */
   const unsaved = new Map<string, ChallengeProgress>();
+  /** Code that storage could not keep or clear (null: cleared); it wins over storage for the rest of the session. */
+  const unsavedCode = new Map<string, string | null>();
 
   function get(challengeId: string): ChallengeProgress {
     const kept = unsaved.get(challengeId);
@@ -58,8 +69,34 @@ export function createProgressStore(): ProgressStore {
     }
   }
 
+  function writeCode(challengeId: string, code: string | null) {
+    try {
+      if (code === null) window.localStorage.removeItem(CODE_KEY_PREFIX + challengeId);
+      else window.localStorage.setItem(CODE_KEY_PREFIX + challengeId, code);
+      unsavedCode.delete(challengeId);
+    } catch {
+      // Storage is unavailable or full: the code (or its clearing) lasts only for this session.
+      unsavedCode.set(challengeId, code);
+    }
+  }
+
   return {
     get,
+    getCode(challengeId) {
+      if (unsavedCode.has(challengeId)) return unsavedCode.get(challengeId)!;
+      try {
+        // Inside the try, as in `get`: merely reaching `localStorage` can throw.
+        return window.localStorage.getItem(CODE_KEY_PREFIX + challengeId);
+      } catch {
+        return null;
+      }
+    },
+    saveCode(challengeId, code) {
+      writeCode(challengeId, code);
+    },
+    clearCode(challengeId) {
+      writeCode(challengeId, null);
+    },
     recordSolved(challengeId) {
       const current = get(challengeId);
       if (current.status === 'revealed') return current;

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { EditorView } from 'codemirror';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Challenge } from '../catalog/challenge';
 import { createProgressStore, type ProgressStore } from '../progress/progressStore';
-import type { CheckResult, Runner } from '../runner/runner';
+import type { CheckResult, Runner, RunResult } from '../runner/runner';
 import { ChallengePage } from './ChallengePage';
 
 afterEach(() => {
@@ -477,5 +478,163 @@ describe('ChallengePage Give Up', () => {
     render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
 
     expect(screen.getByText('Revealed')).toBeTruthy();
+  });
+});
+
+describe('ChallengePage autosave and Reset', () => {
+  let progress: ProgressStore;
+  beforeEach(() => {
+    progress = createProgressStore();
+  });
+
+  async function reset() {
+    await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Reset your code?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Reset to the Broken Code' }));
+  }
+
+  function editor() {
+    return EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Code editor' }))!;
+  }
+
+  /** Replaces the editor's whole document, as if the Learner had retyped it. */
+  function typeCode(code: string) {
+    const view = editor();
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: code } });
+  }
+
+  it('restores the edited code when the page is reopened', async () => {
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    typeCode('export function total(items) { return 42; }\n');
+    first.unmount();
+
+    const runner = vi.fn(passingSubmit);
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+
+    expect(editor().state.doc.toString()).toBe('export function total(items) { return 42; }\n');
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(runner).toHaveBeenCalledWith(challenge, 'export function total(items) { return 42; }\n', 'run');
+  });
+
+  it('saves the code while the Learner types, so a reload restores it', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    typeCode('// work in progress\n');
+
+    // A reload never unmounts the page: only what was already saved survives.
+    await waitFor(() => expect(createProgressStore().getCode(challenge.id)).toBe('// work in progress\n'));
+    cleanup();
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+
+    expect(editor().state.doc.toString()).toBe('// work in progress\n');
+  });
+
+  it('saves the last keystrokes straight away when the page is being left', () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    typeCode('// typed just before reloading\n');
+
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(createProgressStore().getCode(challenge.id)).toBe('// typed just before reloading\n');
+  });
+
+  it('Reset asks for confirmation, and cancelling keeps the edited code', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    typeCode('// my attempt\n');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Reset your code?' });
+    expect(confirmation.textContent).toMatch(/Broken Code/);
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Keep my code' }));
+
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    expect(editor().state.doc.toString()).toBe('// my attempt\n');
+  });
+
+  it('confirming Reset restores the Broken Code, also after the page is reopened', async () => {
+    const runner = vi.fn(passingSubmit);
+    const first = render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    typeCode('// my attempt\n');
+
+    await reset();
+
+    expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(runner).toHaveBeenLastCalledWith(challenge, challenge.brokenCode, 'run');
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+    expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
+  });
+
+  it('cannot confirm Reset while a run is in progress', async () => {
+    let finish!: () => void;
+    const runner: Runner = vi.fn(
+      (c, code, mode) => new Promise<RunResult>((resolve) => (finish = () => resolve(passingSubmit(c, code, mode)))),
+    );
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+
+    const confirm = screen.getByRole('button', { name: 'Reset to the Broken Code' }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    finish();
+    await screen.findByRole('list', { name: 'Check results' });
+    expect(confirm.disabled).toBe(false);
+  });
+
+  it('Reset leaves the status and Hint count unchanged', async () => {
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('status');
+    typeCode('// trying another fix\n');
+
+    await reset();
+
+    expect(screen.getByText('Solved')).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Walkthrough' })).toBeTruthy();
+    expect(screen.getByText('2 Hints remaining')).toBeTruthy();
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+    expect(screen.getByText('Solved')).toBeTruthy();
+    expect(screen.getByText('2 Hints remaining')).toBeTruthy();
+  });
+
+  it('keeps a Revealed Challenge Revealed through Reset', async () => {
+    localStorage.setItem('debugmaster:progress:cart-total', JSON.stringify({ status: 'revealed', hintsRevealed: 3 }));
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    typeCode('// after giving up\n');
+
+    await reset();
+
+    expect(screen.getByText('Revealed')).toBeTruthy();
+    expect(screen.getByText('No Hints remaining')).toBeTruthy();
+    expect(progress.get(challenge.id)).toEqual({ status: 'revealed', hintsRevealed: 3 });
+  });
+
+  it('keeps edits and Reset working for the session when browser storage throws', async () => {
+    const blocked = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(blocked);
+    const runner = vi.fn(passingSubmit);
+    const first = render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    typeCode('// edited offline\n');
+    await userEvent.click(screen.getByRole('button', { name: 'Run' }));
+    expect(runner).toHaveBeenLastCalledWith(challenge, '// edited offline\n', 'run');
+    first.unmount();
+
+    const second = render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    expect(editor().state.doc.toString()).toBe('// edited offline\n');
+    await reset();
+    expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
+    second.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
+    expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
   });
 });
