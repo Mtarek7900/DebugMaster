@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
 import { CodeEditor } from '../components/CodeEditor';
 import { ConsolePanel } from '../components/ConsolePanel';
+import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
 import { browserProgressStore, type ChallengeStatus, type ProgressStore } from '../progress/progressStore';
@@ -19,13 +20,22 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
   const code = useRef(challenge.brokenCode);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
-  const [status, setStatus] = useState(() => progress.get(challenge.id).status);
-  /** True when the latest Submit passed every check and so made the Challenge Solved. */
-  const [justSolved, setJustSolved] = useState(false);
+  const [initialProgress] = useState(() => progress.get(challenge.id));
+  const [status, setStatus] = useState(initialProgress.status);
+  const [hintsRevealed, setHintsRevealed] = useState(Math.min(initialProgress.hintsRevealed, challenge.hints.length));
+  /**
+   * Set when the latest Submit passed every check and so made the Challenge Solved:
+   * the Hints used for that solve, which later reveals do not change.
+   */
+  const [solvedWithHints, setSolvedWithHints] = useState<number | null>(null);
+
+  function revealNextHint() {
+    setHintsRevealed(progress.recordHintRevealed(challenge.id, challenge.hints.length).hintsRevealed);
+  }
 
   async function start(mode: RunMode) {
     setRunning(true);
-    setJustSolved(false);
+    setSolvedWithHints(null);
     try {
       const next = await runner(challenge, code.current, mode);
       setResult(next);
@@ -33,7 +43,7 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
         const newStatus = progress.recordSolved(challenge.id).status;
         setStatus(newStatus);
         // A Revealed Challenge stays Revealed, so there is no Solved to announce.
-        setJustSolved(newStatus === 'solved');
+        if (newStatus === 'solved') setSolvedWithHints(hintsRevealed);
       }
     } finally {
       setRunning(false);
@@ -51,6 +61,12 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
         </div>
         <h2>Bug Report</h2>
         <Markdown className="prose" source={challenge.bugReport} />
+        <h2>Hints</h2>
+        <HintLadder
+          hints={challenge.hints}
+          revealed={hintsRevealed}
+          onRevealNext={revealNextHint}
+        />
       </section>
 
       <section className="panel workbench" aria-label="Your code">
@@ -63,9 +79,9 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
             Submit
           </button>
         </div>
-        {justSolved && (
+        {solvedWithHints !== null && (
           <p className="solved-message" role="status">
-            Solved! Your fix passes every Visible and Hidden Check.
+            Solved with {hintCount(solvedWithHints)}. Your fix passes every Visible and Hidden Check.
           </p>
         )}
         <h2>Results</h2>

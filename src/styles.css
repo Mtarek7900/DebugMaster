@@ -317,3 +317,43 @@ code {
 .walkthrough {
   grid-column: 1 / -1;
 }
+
+.hints {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.hint {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+
+.hint h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.hint .prose > :first-child {
+  margin-top: 0;
+}
+
+.hint .prose > :last-child {
+  margin-bottom: 0;
+}
+
+.hint-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.hints-remaining {
+  font-size: 0.9rem;
+  color: var(--muted);
+}

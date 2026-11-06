@@ -262,3 +262,123 @@ describe('ChallengePage Submit', () => {
     expect(screen.getByText('Revealed')).toBeTruthy();
   });
 });
+
+describe('ChallengePage Hints', () => {
+  let progress: ProgressStore;
+  beforeEach(() => {
+    progress = createProgressStore();
+  });
+
+  function revealedHints() {
+    const list = screen.queryByRole('list', { name: 'Revealed Hints' });
+    return list ? within(list).getAllByRole('listitem').map((item) => item.textContent) : [];
+  }
+
+  it('reveals Hints one at a time, in order, keeping earlier ones visible', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    expect(revealedHints()).toEqual([]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    expect(revealedHints()).toEqual([expect.stringContaining('Reproduce')]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    const [first, second] = revealedHints();
+    expect(first).toContain('Reproduce');
+    expect(first).toContain('a');
+    expect(second).toContain('Read the evidence');
+    expect(second).toContain('b');
+  });
+
+  it('shows how many Hints remain and disables the control once all are revealed', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    const reveal = screen.getByRole('button', { name: 'Reveal next Hint' }) as HTMLButtonElement;
+    expect(screen.getByText('3 Hints remaining')).toBeTruthy();
+
+    await userEvent.click(reveal);
+    expect(screen.getByText('2 Hints remaining')).toBeTruthy();
+    await userEvent.click(reveal);
+    expect(screen.getByText('1 Hint remaining')).toBeTruthy();
+    expect(reveal.disabled).toBe(false);
+    await userEvent.click(reveal);
+
+    expect(screen.getByText('No Hints remaining')).toBeTruthy();
+    expect(reveal.disabled).toBe(true);
+    expect(revealedHints()).toHaveLength(3);
+  });
+
+  it('remembers how many Hints were revealed after the page is reopened', async () => {
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+
+    expect(revealedHints()).toHaveLength(2);
+    expect(screen.getByText('1 Hint remaining')).toBeTruthy();
+  });
+
+  it('keeps revealed Hints for the session when browser storage throws', async () => {
+    const blocked = () => {
+      throw new DOMException('The operation is insecure.', 'SecurityError');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+    const first = render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    first.unmount();
+
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    expect(revealedHints()).toHaveLength(1);
+  });
+
+  it('says the Challenge was Solved with no Hints when none were revealed', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toContain('Solved with no Hints');
+  });
+
+  it('states how many Hints were used in the success message', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toContain('Solved with 2 Hints');
+  });
+
+  it('says "1 Hint" when exactly one Hint was used', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toContain('Solved with 1 Hint.');
+  });
+
+  it('keeps the Hint count of the solve in the success message when more Hints are revealed afterwards', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await screen.findByRole('status');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Reveal next Hint' }));
+
+    expect(screen.getByRole('status').textContent).toContain('Solved with 1 Hint.');
+    expect(revealedHints()).toHaveLength(2);
+  });
+
+  it('never counts more Hints revealed than the Challenge has', async () => {
+    for (let i = 0; i < 5; i++) progress.recordHintRevealed(challenge.id, challenge.hints.length);
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    expect((await screen.findByRole('status')).textContent).toContain('Solved with 3 Hints');
+    expect(progress.get(challenge.id).hintsRevealed).toBe(3);
+  });
+});
