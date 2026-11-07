@@ -5,10 +5,20 @@
 import { describe, expect, it } from 'vitest';
 import { runChallenge } from '../runner/runChallenge';
 import { challenges, validateChallenge } from './catalog';
+import { BUG_CATEGORIES } from './challenge';
 
 describe('the Challenge Catalog', () => {
   it('contains at least one Challenge', () => {
     expect(challenges.length).toBeGreaterThan(0);
+  });
+
+  it('has 2 Challenges of each Difficulty', () => {
+    const count = (difficulty: string) => challenges.filter((c) => c.difficulty === difficulty).length;
+    expect({ easy: count('easy'), medium: count('medium'), hard: count('hard') }).toEqual({ easy: 2, medium: 2, hard: 2 });
+  });
+
+  it('covers every Bug Category exactly once', () => {
+    expect(challenges.map((c) => c.bugCategory).sort()).toEqual(Object.keys(BUG_CATEGORIES).sort());
   });
 
   it('uses each folder name as a unique Challenge id', () => {
