@@ -19,6 +19,11 @@
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
+/** List order: easy → medium → hard, then by id so the order is stable. */
+export function compareChallenges(a: Challenge, b: Challenge): number {
+  return DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty) || a.id.localeCompare(b.id);
+}
+
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = { easy: 'Easy', medium: 'Medium', hard: 'Hard' };
 
 export const BUG_CATEGORIES = {

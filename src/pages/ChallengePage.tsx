@@ -7,17 +7,25 @@ import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
 import { browserProgressStore, type ChallengeStatus, type ProgressStore } from '../progress/progressStore';
+import { challengeHref, LIST_HREF } from '../routing/routes';
 import type { RunMode, Runner, RunResult } from '../runner/runner';
 
 interface ChallengePageProps {
   challenge: Challenge;
   runner: Runner;
   progress?: ProgressStore;
+  /** The Challenge after this one in list order; none on the last. */
+  nextChallenge?: Challenge;
 }
 
 const STATUS_LABELS: Partial<Record<ChallengeStatus, string>> = { solved: 'Solved', revealed: 'Revealed' };
 
-export function ChallengePage({ challenge, runner, progress = browserProgressStore }: ChallengePageProps) {
+export function ChallengePage({
+  challenge,
+  runner,
+  progress = browserProgressStore,
+  nextChallenge,
+}: ChallengePageProps) {
   /** The code the editor opens with; Reset swaps in the Broken Code and a fresh editor. */
   const [editorStart, setEditorStart] = useState(() => ({
     code: progress.getCode(challenge.id) ?? challenge.brokenCode,
@@ -70,6 +78,9 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
   return (
     <main className="challenge-page">
       <section className="panel bug-report" aria-labelledby="challenge-title">
+        <a className="back-link" href={LIST_HREF}>
+          ← All Challenges
+        </a>
         <h1 id="challenge-title">{challenge.title}</h1>
         <div className="labels">
           <span className={`label difficulty-${challenge.difficulty}`}>{DIFFICULTY_LABELS[challenge.difficulty]}</span>
@@ -135,6 +146,11 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
           <p className="passed-message" role="status">
             Your fix passes every Visible and Hidden Check. The Challenge stays Revealed because you gave up.
           </p>
+        )}
+        {status === 'solved' && nextChallenge && (
+          <a className="button primary next-challenge" href={challengeHref(nextChallenge.id)}>
+            Next Challenge: {nextChallenge.title} →
+          </a>
         )}
         <h2>Results</h2>
         <ResultsPanel result={result} running={running} />

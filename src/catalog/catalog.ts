@@ -2,7 +2,7 @@
  * The Challenge Catalog: every folder under `challenges/` becomes a Challenge at
  * build time, with no code changes per Challenge. Invalid Challenges fail loudly.
  */
-import { DIFFICULTIES, parseChallenge, validateChallenge, type Challenge } from './challenge';
+import { compareChallenges, parseChallenge, validateChallenge, type Challenge } from './challenge';
 
 export { validateChallenge } from './challenge';
 export type { Challenge } from './challenge';
@@ -28,9 +28,7 @@ function loadCatalog(files: Record<string, string>): Challenge[] {
     throw new Error(`Invalid Challenges in the catalog:\n${problems.join('\n')}`);
   }
 
-  return loaded.sort(
-    (a, b) => DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty) || a.id.localeCompare(b.id),
-  );
+  return loaded.sort(compareChallenges);
 }
 
 export const challenges: Challenge[] = loadCatalog(rawFiles);

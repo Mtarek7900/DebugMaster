@@ -638,3 +638,35 @@ describe('ChallengePage autosave and Reset', () => {
     expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
   });
 });
+
+describe('ChallengePage navigation', () => {
+  const next: Challenge = { ...challenge, id: 'price-format', title: 'Prices show too many decimals' };
+
+  it('links back to the Challenge list', () => {
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
+
+    expect(screen.getByRole('link', { name: /All Challenges/ }).getAttribute('href')).toBe('#/');
+  });
+
+  it('offers the Next Challenge once Solved', async () => {
+    render(
+      <ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} nextChallenge={next} />,
+    );
+    expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    const link = await screen.findByRole('link', { name: /Next Challenge/ });
+    expect(link.getAttribute('href')).toBe('#/challenges/price-format');
+    expect(link.textContent).toContain('Prices show too many decimals');
+  });
+
+  it('offers no Next Challenge on the last Challenge', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await screen.findByRole('status');
+    expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
+  });
+});

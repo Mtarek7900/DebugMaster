@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] The site has a list route (the home page) and a Challenge route per Challenge id; navigation works on a static host (no server routing needed)
-- [ ] The list is ordered by Difficulty and shows title, Difficulty, Bug Category, status and the Hint count on Solved
-- [ ] Difficulty and Bug Category filters work individually and combined; an empty result shows a friendly message
-- [ ] The Challenge page links back to the list
-- [ ] After Solved, a "Next Challenge" link goes to the next Challenge in list order (hidden on the last one)
-- [ ] Page-level tests cover ordering, each filter, combined filters, the empty message, and status/Hint-count display
+- [x] The site has a list route (the home page) and a Challenge route per Challenge id; navigation works on a static host (no server routing needed)
+- [x] The list is ordered by Difficulty and shows title, Difficulty, Bug Category, status and the Hint count on Solved
+- [x] Difficulty and Bug Category filters work individually and combined; an empty result shows a friendly message
+- [x] The Challenge page links back to the list
+- [x] After Solved, a "Next Challenge" link goes to the next Challenge in list order (hidden on the last one)
+- [x] Page-level tests cover ordering, each filter, combined filters, the empty message, and status/Hint-count display
