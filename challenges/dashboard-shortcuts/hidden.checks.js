@@ -19,7 +19,7 @@ check('with 12 panels, only Alt+1 to Alt+9 are shortcuts', () => {
   expect(dashboard.press('Alt+10')).toBe(false);
 });
 
-check('history lists the panels opened, skipping repeats', () => {
+check('history lists the panels opened, not repeating the panel already open', () => {
   const dashboard = createDashboard([
     { id: 'sales', title: 'Sales' },
     { id: 'refunds', title: 'Refunds' },

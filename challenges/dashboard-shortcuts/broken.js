@@ -1,6 +1,5 @@
 // Keyboard shortcuts for the analytics dashboard: Alt+1 opens the first panel,
-// Alt+2 the second, and so on up to Alt+9. Part of the dashboard's older script
-// bundle, which is why it is written in the older style.
+// Alt+2 the second, and so on up to Alt+9.
 
 var MAX_SHORTCUTS = 9;
 
@@ -41,7 +40,7 @@ export function createDashboard(panels) {
   };
 }
 
-// The cheat sheet shown when the user presses "?".
+// The cheat sheet shown when the analyst presses "?".
 export function describeShortcuts(panels) {
   var lines = [];
   for (var i = 0; i < panels.length && i < MAX_SHORTCUTS; i++) {

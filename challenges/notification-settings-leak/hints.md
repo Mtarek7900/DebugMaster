@@ -8,7 +8,7 @@ In the failing check, the fresh account should have `sms: false` but has `sms: t
 
 ## Narrow down
 
-Add `console.log(JSON.stringify(defaultSettings()))` at the start of a check and again after a call to `settingsFor(...)`. Do the defaults themselves change? Which line in `settingsFor` writes to the settings, and which object is it really writing to?
+In a failing check, add `console.log(JSON.stringify(defaultSettings()))` just before and just after its first call to `settingsFor(...)`. Do the defaults themselves change? Which line in `settingsFor` writes to the settings, and which object is it really writing to?
 
 ## Form a theory
 

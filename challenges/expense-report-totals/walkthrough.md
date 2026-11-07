@@ -10,7 +10,7 @@ The "$ and commas" check goes further and gives `NaN`. Joining `0`, `"1200.50"` 
 
 ## 3. Narrow down
 
-The Bug Report holds the strongest clue: amounts sent as **numbers** by the mobile app add up correctly, and only **typed text** goes wrong. So the bug is on the path a string takes through the code. Logging inside the loop shows it:
+The Bug Report gives the strongest lead: the mobile app's reports add up correctly, and only the web form's go wrong. The mobile app sends its amounts as **numbers**, while the web form sends exactly the **text** that was typed. So the bug is on the path a string takes through the code. Logging inside the loop shows it:
 
 ```js
 const amount = parseAmount(expense.amount);
@@ -44,7 +44,7 @@ Return a number from `parseAmount`:
 return Number(cleaned);
 ```
 
-`parseFloat(cleaned)` works too. Changing `total += Number(amount)` in `reportTotals` instead would fix this screen, but every other caller of `parseAmount` would still get strings. Fix the function that breaks its promise.
+`parseFloat(cleaned)` works too. Changing `total += Number(amount)` in `reportTotals` instead would fix this screen, but `parseAmount` would still break its promise to return a number, and every other caller would still get strings. Fix the function that breaks its promise.
 
 ## Recognising type-coercion bugs
 
