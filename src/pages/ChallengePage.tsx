@@ -56,8 +56,18 @@ export function ChallengePage({
     setEditorStart((current) => ({ code: challenge.brokenCode, resets: current.resets + 1 }));
   }
 
+  /** Set by Give Up, which promises to show the Walkthrough: on desktop it opens below the fold. */
+  const showWalkthrough = useRef(false);
+  const walkthrough = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!showWalkthrough.current || !walkthrough.current) return;
+    showWalkthrough.current = false;
+    walkthrough.current.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+  }, [status]);
+
   function giveUp() {
     setPassedAll(null);
+    showWalkthrough.current = true;
     setStatus(progress.recordRevealed(challenge.id).status);
   }
 
@@ -93,12 +103,6 @@ export function ChallengePage({
         <ChallengeLabels challenge={challenge} status={status === 'unattempted' ? undefined : status} />
         <h2>Bug Report</h2>
         <Markdown className="prose" source={challenge.bugReport} />
-        <h2>Hints</h2>
-        <HintLadder
-          hints={challenge.hints}
-          revealed={hintsRevealed}
-          onRevealNext={revealNextHint}
-        />
       </section>
 
       <section className="panel workbench" aria-label="Your code">
@@ -157,14 +161,23 @@ export function ChallengePage({
             Next Challenge: {nextChallenge.title} →
           </a>
         )}
-        <h2>Results</h2>
+      </section>
+
+      {/* Sections are in phone order: they stack as written there, and the desktop grid places them in columns. */}
+      <section className="panel output" aria-labelledby="results-title">
+        <h2 id="results-title">Results</h2>
         <ResultsPanel result={result} running={running} />
         <h2>Console</h2>
         <ConsolePanel entries={running ? null : (result?.console ?? null)} />
       </section>
 
+      <section className="panel hints-panel" aria-labelledby="hints-title">
+        <h2 id="hints-title">Hints</h2>
+        <HintLadder hints={challenge.hints} revealed={hintsRevealed} onRevealNext={revealNextHint} />
+      </section>
+
       {status !== 'unattempted' && (
-        <section className="panel walkthrough" aria-labelledby="walkthrough-title">
+        <section className="panel walkthrough" aria-labelledby="walkthrough-title" ref={walkthrough}>
           <h2 id="walkthrough-title">Walkthrough</h2>
           <Markdown className="prose" source={challenge.walkthrough} />
         </section>

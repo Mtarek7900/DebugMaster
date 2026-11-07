@@ -699,3 +699,42 @@ describe('ChallengePage navigation', () => {
     expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
   });
 });
+
+describe('ChallengePage layout', () => {
+  it('orders its sections Bug Report → code → Results → Hints → Walkthrough, as they stack on a phone', async () => {
+    const progress = createProgressStore();
+    progress.recordRevealed(challenge.id);
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={progress} />);
+
+    expect(screen.getAllByRole('region').map(regionName)).toEqual([
+      'Cart total is wrong',
+      'Your code',
+      'Results',
+      'Hints',
+      'Walkthrough',
+    ]);
+  });
+});
+
+/** A region's accessible name: its aria-label, or the text of the element its aria-labelledby points at. */
+function regionName(region: HTMLElement): string | null {
+  const labelledBy = region.getAttribute('aria-labelledby');
+  return labelledBy ? document.getElementById(labelledBy)!.textContent : region.getAttribute('aria-label');
+}
+
+describe('ChallengePage Give Up scrolling', () => {
+  it('brings the Walkthrough into view after Give Up, since on desktop it opens below the fold', async () => {
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Give up and show the Walkthrough' }));
+
+    expect(scrolled).toEqual([screen.getByRole('region', { name: 'Walkthrough' })]);
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+});

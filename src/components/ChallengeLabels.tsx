@@ -15,9 +15,14 @@ export function ChallengeLabels({ challenge, status, children }: ChallengeLabels
   return (
     <div className="labels">
       <span className={`label difficulty-${challenge.difficulty}`}>{DIFFICULTY_LABELS[challenge.difficulty]}</span>
-      <span className="label">{BUG_CATEGORIES[challenge.bugCategory]}</span>
+      <span className="label">{withCode(BUG_CATEGORIES[challenge.bugCategory])}</span>
       {status && <span className={`label status-${status}`}>{STATUS_LABELS[status]}</span>}
       {children}
     </div>
   );
+}
+
+/** Renders `backticked` parts of a label as code. */
+function withCode(label: string): ReactNode[] {
+  return label.split('`').map((part, i) => (i % 2 === 1 ? <code key={i}>{part}</code> : part));
 }

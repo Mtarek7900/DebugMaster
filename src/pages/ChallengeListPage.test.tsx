@@ -165,6 +165,16 @@ describe('ChallengeListPage', () => {
     expect(within(entries()[0]).getByRole('link').getAttribute('href')).toBe('#/challenges/prices?difficulty=medium');
   });
 
+  it('shows code in a Bug Category label as code, and as plain text in the filter', () => {
+    const autosave = makeChallenge('autosave', 'Autosave never saves', 'hard', 'this-binding');
+    render(<ListWithFilters challenges={[autosave]} progress={progress} />);
+
+    const [entry] = entries();
+    expect(within(entry).getByText('this').tagName).toBe('CODE');
+    expect(entry.textContent).not.toContain('`');
+    expect(screen.getByRole('option', { name: 'this binding' })).toBeTruthy();
+  });
+
   it('says so when no Challenge matches the filters', async () => {
     render(<ListWithFilters challenges={challenges} progress={progress} />);
 
