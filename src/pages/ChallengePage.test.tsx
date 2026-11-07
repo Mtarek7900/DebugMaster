@@ -611,7 +611,7 @@ describe('ChallengePage autosave and Reset', () => {
 
     expect(screen.getByText('Revealed')).toBeTruthy();
     expect(screen.getByText('No Hints remaining')).toBeTruthy();
-    expect(progress.get(challenge.id)).toEqual({ status: 'revealed', hintsRevealed: 3 });
+    expect(progress.get(challenge.id)).toEqual({ status: 'revealed', hintsRevealed: 3, hintsUsed: null });
   });
 
   it('keeps edits and Reset working for the session when browser storage throws', async () => {

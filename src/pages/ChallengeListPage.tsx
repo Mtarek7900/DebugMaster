@@ -10,7 +10,7 @@ import {
 } from '../catalog/challenge';
 import { ChallengeLabels } from '../components/ChallengeLabels';
 import { hintCount } from '../components/HintLadder';
-import { browserProgressStore, hintsRevealedFor, type ProgressStore } from '../progress/progressStore';
+import { browserProgressStore, hintsUsedFor, type ProgressStore } from '../progress/progressStore';
 import { challengeHref } from '../routing/routes';
 
 interface ChallengeListPageProps {
@@ -69,7 +69,7 @@ export function ChallengeListPage({ challenges, progress = browserProgressStore 
                 <a href={challengeHref(challenge.id)}>{challenge.title}</a>
                 <ChallengeLabels challenge={challenge} status={challengeProgress.status}>
                   {challengeProgress.status === 'solved' && (
-                    <span className="hints-used">{hintCount(hintsRevealedFor(challenge, challengeProgress))} used</span>
+                    <span className="hints-used">{hintCount(hintsUsedFor(challenge, challengeProgress) ?? 0)} used</span>
                   )}
                 </ChallengeLabels>
               </li>

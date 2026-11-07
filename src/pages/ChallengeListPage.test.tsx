@@ -92,6 +92,25 @@ describe('ChallengeListPage', () => {
     expect(race.textContent).not.toMatch(/Hint/);
   });
 
+  it('shows the Hints used for the first Solve, not Hints revealed afterwards', () => {
+    progress.recordHintRevealed('cart', 3);
+    progress.recordSolved('cart');
+    progress.recordHintRevealed('cart', 3);
+    progress.recordSolved('cart');
+    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+
+    const [cart] = entries();
+    expect(cart.textContent).toContain('1 Hint used');
+  });
+
+  it('falls back to the Hints revealed for a Solve saved before the Hints used were kept', () => {
+    localStorage.setItem('debugmaster:progress:cart', JSON.stringify({ status: 'solved', hintsRevealed: 2 }));
+    render(<ChallengeListPage challenges={challenges} progress={createProgressStore()} />);
+
+    const [cart] = entries();
+    expect(cart.textContent).toContain('2 Hints used');
+  });
+
   it('filters by Difficulty', async () => {
     render(<ChallengeListPage challenges={challenges} progress={progress} />);
 

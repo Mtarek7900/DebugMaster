@@ -7,7 +7,7 @@ import { ConsolePanel } from '../components/ConsolePanel';
 import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
-import { browserProgressStore, hintsRevealedFor, type ProgressStore } from '../progress/progressStore';
+import { browserProgressStore, hintsRevealedFor, hintsUsedFor, type ProgressStore } from '../progress/progressStore';
 import { challengeHref, LIST_HREF } from '../routing/routes';
 import type { RunMode, Runner, RunResult } from '../runner/runner';
 
@@ -64,10 +64,14 @@ export function ChallengePage({
       const next = await runner(challenge, code.current, mode);
       setResult(next);
       if (mode === 'submit' && passedEveryCheck(next)) {
-        const newStatus = progress.recordSolved(challenge.id).status;
-        setStatus(newStatus);
+        const solved = progress.recordSolved(challenge.id);
+        setStatus(solved.status);
         // A Revealed Challenge stays Revealed: announce that the checks pass, not Solved.
-        setPassedAll(newStatus === 'solved' ? { status: 'solved', hintsUsed: hintsRevealed } : { status: 'revealed' });
+        setPassedAll(
+          solved.status === 'solved'
+            ? { status: 'solved', hintsUsed: hintsUsedFor(challenge, solved) ?? 0 }
+            : { status: 'revealed' },
+        );
       }
     } finally {
       setRunning(false);
@@ -208,7 +212,7 @@ function useAutosave(save: (value: string) => void) {
 
 /**
  * What a Submit that passed every check meant: Solved, with the Hints used for
- * that solve (later reveals do not change it), or still Revealed after Give Up.
+ * the first Solve (later reveals do not change it), or still Revealed after Give Up.
  */
 type PassedAll = { status: 'solved'; hintsUsed: number } | { status: 'revealed' };
 
