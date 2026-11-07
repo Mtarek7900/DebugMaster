@@ -661,6 +661,17 @@ describe('ChallengePage navigation', () => {
     expect(link.textContent).toContain('Prices show too many decimals');
   });
 
+  it('offers the Next Challenge once Revealed', async () => {
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} nextChallenge={next} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Give up and show the Walkthrough' }));
+
+    const link = screen.getByRole('link', { name: /Next Challenge/ });
+    expect(link.getAttribute('href')).toBe('#/challenges/price-format');
+  });
+
   it('offers no Next Challenge on the last Challenge', async () => {
     render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
 

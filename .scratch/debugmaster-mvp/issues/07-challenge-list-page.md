@@ -10,5 +10,5 @@
 - [x] The list is ordered by Difficulty and shows title, Difficulty, Bug Category, status and the Hint count on Solved
 - [x] Difficulty and Bug Category filters work individually and combined; an empty result shows a friendly message
 - [x] The Challenge page links back to the list
-- [x] After Solved, a "Next Challenge" link goes to the next Challenge in list order (hidden on the last one)
+- [x] After Solved (and, by later decision, after Revealed), a "Next Challenge" link goes to the next Challenge in list order (hidden on the last one)
 - [x] Page-level tests cover ordering, each filter, combined filters, the empty message, and status/Hint-count display

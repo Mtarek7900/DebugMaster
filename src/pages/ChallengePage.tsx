@@ -143,7 +143,8 @@ export function ChallengePage({
             Your fix passes every Visible and Hidden Check. The Challenge stays Revealed because you gave up.
           </p>
         )}
-        {status === 'solved' && nextChallenge && (
+        {/* Once the attempt is over, Solved or Revealed, the Learner can move on. */}
+        {status !== 'unattempted' && nextChallenge && (
           <a className="button primary next-challenge" href={challengeHref(nextChallenge.id)}>
             Next Challenge: {nextChallenge.title} →
           </a>
