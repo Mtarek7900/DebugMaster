@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] Editor changes are saved per Challenge in the Progress Store as the Learner types (debounced is fine)
-- [ ] Reopening or reloading a Challenge restores the saved code instead of the Broken Code
-- [ ] A Reset button asks for confirmation; confirming restores the Broken Code and clears the saved code
-- [ ] Reset leaves the status (Solved/Revealed) and Hint count unchanged
-- [ ] With storage unavailable, editing still works for the session
-- [ ] Page-level tests cover restore across remount, Reset cancel/confirm, and status preserved through Reset
+- [x] Editor changes are saved per Challenge in the Progress Store as the Learner types (debounced is fine)
+- [x] Reopening or reloading a Challenge restores the saved code instead of the Broken Code
+- [x] A Reset button asks for confirmation; confirming restores the Broken Code and clears the saved code
+- [x] Reset leaves the status (Solved/Revealed) and Hint count unchanged
+- [x] With storage unavailable, editing still works for the session
+- [x] Page-level tests cover restore across remount, Reset cancel/confirm, and status preserved through Reset

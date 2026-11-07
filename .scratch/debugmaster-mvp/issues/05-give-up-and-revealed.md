@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] The Challenge page has a Give Up button that asks for confirmation; cancelling changes nothing
-- [ ] Confirming opens the Walkthrough and sets the status to Revealed in the Progress Store
-- [ ] After Give Up, Run and Submit still work; a fully passing Submit shows that the checks pass but the status stays Revealed
-- [ ] Revealed persists across a reload
-- [ ] Give Up is not offered once a Challenge is Solved (the Walkthrough is already open)
-- [ ] Page-level tests cover cancel, confirm → Revealed + Walkthrough, Submit-after-Revealed staying Revealed, and persistence
+- [x] The Challenge page has a Give Up button that asks for confirmation; cancelling changes nothing
+- [x] Confirming opens the Walkthrough and sets the status to Revealed in the Progress Store
+- [x] After Give Up, Run and Submit still work; a fully passing Submit shows that the checks pass but the status stays Revealed
+- [x] Revealed persists across a reload
+- [x] Give Up is not offered once a Challenge is Solved (the Walkthrough is already open)
+- [x] Page-level tests cover cancel, confirm → Revealed + Walkthrough, Submit-after-Revealed staying Revealed, and persistence

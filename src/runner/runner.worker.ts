@@ -1,14 +1,17 @@
 /// <reference lib="webworker" />
 /** Web Worker entry: runs the Challenge Runner core off the main thread. */
-import { runChallenge, type RunMode, type RunnableChallenge } from './runChallenge';
+import { reportCrash, serveRun, type RunRequest, type WorkerMessage } from './workerProtocol';
 
-export interface RunRequest {
-  challenge: RunnableChallenge;
-  code: string;
-  mode: RunMode;
-}
+const post = (message: WorkerMessage) => self.postMessage(message);
 
-self.onmessage = async (event: MessageEvent<RunRequest>) => {
-  const { challenge, code, mode } = event.data;
-  self.postMessage(await runChallenge(challenge, code, mode));
+self.onmessage = (event: MessageEvent<RunRequest>) => {
+  void serveRun(event.data, post);
 };
+self.addEventListener('error', (event) => {
+  event.preventDefault();
+  reportCrash(event.error ?? event.message, post);
+});
+self.addEventListener('unhandledrejection', (event) => {
+  event.preventDefault();
+  reportCrash(event.reason, post);
+});

@@ -6,8 +6,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] The Challenge page shows a Hint ladder: a "Reveal next Hint" control and the Hints revealed so far, in order
-- [ ] The page shows how many Hints remain; the control is disabled once all are revealed
-- [ ] The number of Hints revealed is stored per Challenge in the Progress Store and restored on reload
-- [ ] The success message on Solved states the Hint count
-- [ ] Page-level tests cover in-order reveal, the remaining count, persistence across remount, and the Hint count in the success message
+- [x] The Challenge page shows a Hint ladder: a "Reveal next Hint" control and the Hints revealed so far, in order
+- [x] The page shows how many Hints remain; the control is disabled once all are revealed
+- [x] The number of Hints revealed is stored per Challenge in the Progress Store and restored on reload
+- [x] The success message on Solved states the Hint count
+- [x] Page-level tests cover in-order reveal, the remaining count, persistence across remount, and the Hint count in the success message

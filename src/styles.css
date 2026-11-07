@@ -10,6 +10,7 @@
   --pass-bg: #e8f5ec;
   --fail: #c62828;
   --fail-bg: #fdecec;
+  --warn: #9a6700;
   --code-bg: #f0f2f5;
   --radius: 8px;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -29,6 +30,7 @@
     --pass-bg: #12261a;
     --fail: #ff7b72;
     --fail-bg: #2d1517;
+    --warn: #d29922;
     --code-bg: #20262e;
   }
 }
@@ -143,6 +145,7 @@ code {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
 }
@@ -161,6 +164,12 @@ code {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-text);
+  font-weight: 600;
+}
+
+.button.danger {
+  border-color: var(--fail);
+  color: var(--fail);
   font-weight: 600;
 }
 
@@ -246,4 +255,150 @@ code {
 .check-detail dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.console {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  background: var(--code-bg);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.console-empty {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font);
+}
+
+.console-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.console-line {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.console-line:last-child {
+  border-bottom: none;
+}
+
+.console-warn {
+  color: var(--warn);
+}
+
+.console-error {
+  color: var(--fail);
+}
+
+.check-kind {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-solved {
+  color: var(--pass);
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.status-revealed {
+  color: var(--warn);
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.confirmation {
+  flex-basis: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--fail-bg);
+}
+
+.confirmation h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.confirmation p {
+  margin: 0 0 12px;
+}
+
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.passed-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--code-bg);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.solved-message {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--pass-bg);
+  color: var(--pass);
+  font-weight: 600;
+}
+
+.walkthrough {
+  grid-column: 1 / -1;
+}
+
+.hints {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.hint {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+
+.hint h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+}
+
+.hint .prose > :first-child {
+  margin-top: 0;
+}
+
+.hint .prose > :last-child {
+  margin-bottom: 0;
+}
+
+.hint-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.hints-remaining {
+  font-size: 0.9rem;
+  color: var(--muted);
 }

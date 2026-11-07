@@ -115,3 +115,147 @@ describe('runChallenge in run mode', () => {
     });
   });
 });
+
+describe('runChallenge in submit mode', () => {
+  it('runs every Visible Check and then every Hidden Check, each marked with its kind', async () => {
+    const result = await runChallenge(addChallenge, brokenAdd, 'submit');
+
+    expect(result.outcome).toBe('completed');
+    expect(result.checks.map((c) => [c.name, c.kind, c.passed])).toEqual([
+      ['adds two positive numbers', 'visible', false],
+      ['adding zero changes nothing', 'visible', true],
+      ['adds negative numbers', 'hidden', false],
+    ]);
+  });
+
+  it('reports the expected and actual values of a failed Hidden Check', async () => {
+    const result = await runChallenge(addChallenge, brokenAdd, 'submit');
+
+    expect(result.checks[2]).toMatchObject({ kind: 'hidden', passed: false, expected: '-5', actual: '1' });
+  });
+
+  it('rejects a fix that hard-codes the Visible Checks', async () => {
+    const hardCoded = `export function add(a, b) {
+  if (a === 2 && b === 3) return 5;
+  return a;
+}
+`;
+
+    const run = await runChallenge(addChallenge, hardCoded, 'run');
+    const submit = await runChallenge(addChallenge, hardCoded, 'submit');
+
+    expect(run.checks.every((c) => c.passed)).toBe(true);
+    expect(submit.checks.filter((c) => !c.passed).map((c) => c.name)).toEqual(['adds negative numbers']);
+  });
+
+  it('passes every check for a real fix', async () => {
+    const result = await runChallenge(addChallenge, 'export const add = (a, b) => a + b;', 'submit');
+
+    expect(result.outcome).toBe('completed');
+    expect(result.checks).toHaveLength(3);
+    expect(result.checks.every((c) => c.passed)).toBe(true);
+  });
+});
+
+describe('runChallenge console capture', () => {
+  it("captures the Learner's console output in order, with objects and arrays readable", async () => {
+    const challenge = {
+      visibleChecks: `
+        console.log('loading checks');
+        check('first', () => { describe({ id: 1, tags: ['a', 'b'] }); });
+        check('second', () => { console.warn('careful', 42); });
+      `,
+      hiddenChecks: '',
+    };
+    const code = `
+      console.log('module loaded');
+      export function describe(order) {
+        console.log('order is', order, [1, [2, 3]]);
+        console.error(new TypeError('bad'));
+      }
+    `;
+    const result = await runChallenge(challenge, code, 'run');
+
+    expect(result.console).toEqual([
+      { level: 'log', text: 'module loaded' },
+      { level: 'log', text: 'loading checks' },
+      { level: 'log', text: 'order is { id: 1, tags: ["a", "b"] } [1, [2, 3]]' },
+      { level: 'error', text: 'TypeError: bad' },
+      { level: 'warn', text: 'careful 42' },
+    ]);
+  });
+});
+
+describe('runChallenge when code throws', () => {
+  it('reports "threw" with the message when the Learner\'s code throws while loading', async () => {
+    const challenge = { visibleChecks: `check('anything', () => {});`, hiddenChecks: '' };
+    const result = await runChallenge(challenge, `const x = null;\nx.length;\nexport const y = 1;`, 'run');
+
+    expect(result.outcome).toBe('threw');
+    expect(result).toMatchObject({ error: expect.stringContaining('TypeError') });
+  });
+
+  it('reports "threw" when a check crashes, still listing every check with that check marked failed', async () => {
+    const challenge = {
+      visibleChecks: `
+        check('reads the first item', () => { expect(first(null)).toBe(1); });
+        check('still runs later checks', () => { expect(first([1])).toBe(1); });
+      `,
+      hiddenChecks: '',
+    };
+    const result = await runChallenge(challenge, `export const first = (items) => items[0];`, 'run');
+
+    expect(result.outcome).toBe('threw');
+    expect(result).toMatchObject({ error: expect.stringMatching(/^TypeError: .*null/) });
+    expect(result.checks.map((c) => [c.name, c.passed])).toEqual([
+      ['reads the first item', false],
+      ['still runs later checks', true],
+    ]);
+  });
+});
+
+describe('runChallenge with async code', () => {
+  it('awaits async checks, including promises and timers', async () => {
+    const challenge = {
+      visibleChecks: `
+        check('waits for a timer', async () => {
+          expect(await delayed(5, 'done')).toBe('done');
+        });
+        check('fails when the awaited value is wrong', async () => {
+          expect(await delayed(1, 'early')).toBe('late');
+        });
+      `,
+      hiddenChecks: '',
+    };
+    const code = `export const delayed = (ms, value) => new Promise((resolve) => setTimeout(() => resolve(value), ms));`;
+    const result = await runChallenge(challenge, code, 'run');
+
+    expect(result.outcome).toBe('completed');
+    expect(result.checks).toMatchObject([
+      { name: 'waits for a timer', passed: true },
+      { name: 'fails when the awaited value is wrong', passed: false, expected: '"late"', actual: '"early"' },
+    ]);
+  });
+
+  it('reports a rejected promise like a synchronous throw', async () => {
+    const challenge = {
+      visibleChecks: `check('loads the user', async () => { await loadUser(); });`,
+      hiddenChecks: '',
+    };
+    const code = `export async function loadUser() { await null; throw new Error('network down'); }`;
+    const result = await runChallenge(challenge, code, 'run');
+
+    expect(result).toMatchObject({ outcome: 'threw', error: 'Error: network down' });
+    expect(result.checks).toMatchObject([{ name: 'loads the user', passed: false, message: 'Error: network down' }]);
+  });
+});
+
+describe('runChallenge and Learner code that names its own console', () => {
+  it('lets the code declare its own `console` variable', async () => {
+    const challenge = { visibleChecks: `check('logs', () => { expect(run()).toBe(1); });`, hiddenChecks: '' };
+    const code = `const console = { log() {} };\nexport const run = () => { console.log('hidden'); return 1; };`;
+    const result = await runChallenge(challenge, code, 'run');
+
+    expect(result).toMatchObject({ outcome: 'completed', checks: [{ passed: true }], console: [] });
+  });
+});
