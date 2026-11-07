@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { BugCategory, Challenge, Difficulty } from '../catalog/challenge';
+import type { ChallengeFilters } from '../catalog/filters';
 import { createProgressStore, type ProgressStore } from '../progress/progressStore';
 import { ChallengeListPage } from './ChallengeListPage';
 
@@ -39,6 +41,15 @@ const challenges = [
   makeChallenge('pages', 'Last page is missing', 'easy', 'off-by-one'),
 ];
 
+/** The list page with its filters held in state, as the app holds them in the URL. */
+function ListWithFilters({
+  initialFilters = {},
+  ...props
+}: { challenges: Challenge[]; progress: ProgressStore; initialFilters?: ChallengeFilters }) {
+  const [filters, setFilters] = useState(initialFilters);
+  return <ChallengeListPage {...props} filters={filters} onFiltersChange={setFilters} />;
+}
+
 function entries() {
   return within(screen.getByRole('list', { name: 'Challenges' })).queryAllByRole('listitem');
 }
@@ -54,7 +65,7 @@ describe('ChallengeListPage', () => {
   });
 
   it('lists every Challenge from easy to hard, with its Difficulty and Bug Category, linking to its page', () => {
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     expect(titles()).toEqual([
       'Cart total is wrong',
@@ -79,7 +90,7 @@ describe('ChallengeListPage', () => {
     progress.recordSolved('pages');
     progress.recordHintRevealed('prices', 3);
     progress.recordRevealed('prices');
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     const [cart, pages, prices, race] = entries();
     expect(within(cart).getByText('Solved')).toBeTruthy();
@@ -97,7 +108,7 @@ describe('ChallengeListPage', () => {
     progress.recordSolved('cart');
     progress.recordHintRevealed('cart', 3);
     progress.recordSolved('cart');
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     const [cart] = entries();
     expect(cart.textContent).toContain('1 Hint used');
@@ -105,14 +116,14 @@ describe('ChallengeListPage', () => {
 
   it('falls back to the Hints revealed for a Solve saved before the Hints used were kept', () => {
     localStorage.setItem('debugmaster:progress:cart', JSON.stringify({ status: 'solved', hintsRevealed: 2 }));
-    render(<ChallengeListPage challenges={challenges} progress={createProgressStore()} />);
+    render(<ListWithFilters challenges={challenges} progress={createProgressStore()} />);
 
     const [cart] = entries();
     expect(cart.textContent).toContain('2 Hints used');
   });
 
   it('filters by Difficulty', async () => {
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Difficulty' }), 'Easy');
 
@@ -120,7 +131,7 @@ describe('ChallengeListPage', () => {
   });
 
   it('filters by Bug Category', async () => {
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Bug Category' }), 'Type coercion');
 
@@ -129,7 +140,7 @@ describe('ChallengeListPage', () => {
 
   it('combines the Difficulty and Bug Category filters', async () => {
     const withMediumOffByOne = [...challenges, makeChallenge('rows', 'Table drops a row', 'medium', 'off-by-one')];
-    render(<ChallengeListPage challenges={withMediumOffByOne} progress={progress} />);
+    render(<ListWithFilters challenges={withMediumOffByOne} progress={progress} />);
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Bug Category' }), 'Off-by-one');
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Difficulty' }), 'Medium');
@@ -137,8 +148,25 @@ describe('ChallengeListPage', () => {
     expect(titles()).toEqual(['Table drops a row']);
   });
 
+  it('opens with the filters it is given', () => {
+    render(
+      <ListWithFilters challenges={challenges} progress={progress} initialFilters={{ bugCategory: 'off-by-one' }} />,
+    );
+
+    expect((screen.getByRole('combobox', { name: 'Bug Category' }) as HTMLSelectElement).value).toBe('off-by-one');
+    expect(titles()).toEqual(['Cart total is wrong', 'Last page is missing']);
+  });
+
+  it('carries the filters into each Challenge link', async () => {
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Difficulty' }), 'Medium');
+
+    expect(within(entries()[0]).getByRole('link').getAttribute('href')).toBe('#/challenges/prices?difficulty=medium');
+  });
+
   it('says so when no Challenge matches the filters', async () => {
-    render(<ChallengeListPage challenges={challenges} progress={progress} />);
+    render(<ListWithFilters challenges={challenges} progress={progress} />);
 
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Difficulty' }), 'Hard');
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Bug Category' }), 'Off-by-one');

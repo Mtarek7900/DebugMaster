@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Challenge } from '../catalog/challenge';
+import type { ChallengeFilters } from '../catalog/filters';
 import { ChallengeLabels } from '../components/ChallengeLabels';
 import { CodeEditor } from '../components/CodeEditor';
 import { ConfirmButton } from '../components/ConfirmButton';
@@ -8,15 +9,17 @@ import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
 import { browserProgressStore, hintsRevealedFor, hintsUsedFor, type ProgressStore } from '../progress/progressStore';
-import { challengeHref, LIST_HREF } from '../routing/routes';
+import { challengeHref, listHref } from '../routing/routes';
 import type { RunMode, Runner, RunResult } from '../runner/runner';
 
 interface ChallengePageProps {
   challenge: Challenge;
   runner: Runner;
   progress?: ProgressStore;
-  /** The Challenge after this one in list order; none on the last. */
+  /** The Challenge after this one in list order, among those matching `filters`; none on the last. */
   nextChallenge?: Challenge;
+  /** The list filters this Challenge was opened under, kept in its links. */
+  filters?: ChallengeFilters;
 }
 
 export function ChallengePage({
@@ -24,6 +27,7 @@ export function ChallengePage({
   runner,
   progress = browserProgressStore,
   nextChallenge,
+  filters = {},
 }: ChallengePageProps) {
   /** The code the editor opens with; Reset swaps in the Broken Code and a fresh editor. */
   const [editorStart, setEditorStart] = useState(() => ({
@@ -81,8 +85,8 @@ export function ChallengePage({
   return (
     <main className="challenge-page">
       <section className="panel bug-report" aria-labelledby="challenge-title">
-        <a className="back-link" href={LIST_HREF}>
-          ← All Challenges
+        <a className="back-link" href={listHref(filters)}>
+          ← Back to Challenges
         </a>
         <h1 id="challenge-title">{challenge.title}</h1>
         {/* An unattempted Challenge needs no status label while the Learner is on it. */}
@@ -149,7 +153,7 @@ export function ChallengePage({
         )}
         {/* Once the attempt is over, Solved or Revealed, the Learner can move on. */}
         {status !== 'unattempted' && nextChallenge && (
-          <a className="button primary next-challenge" href={challengeHref(nextChallenge.id)}>
+          <a className="button primary next-challenge" href={challengeHref(nextChallenge.id, filters)}>
             Next Challenge: {nextChallenge.title} →
           </a>
         )}

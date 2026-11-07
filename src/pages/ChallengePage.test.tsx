@@ -645,7 +645,25 @@ describe('ChallengePage navigation', () => {
   it('links back to the Challenge list', () => {
     render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
 
-    expect(screen.getByRole('link', { name: /All Challenges/ }).getAttribute('href')).toBe('#/');
+    expect(screen.getByRole('link', { name: /Back to Challenges/ }).getAttribute('href')).toBe('#/');
+  });
+
+  it('keeps the filters the Challenge was opened under in its links', async () => {
+    render(
+      <ChallengePage
+        challenge={challenge}
+        runner={passingSubmit}
+        progress={createProgressStore()}
+        nextChallenge={next}
+        filters={{ bugCategory: 'off-by-one' }}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /Back to Challenges/ }).getAttribute('href')).toBe('#/?category=off-by-one');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    expect((await screen.findByRole('link', { name: /Next Challenge/ })).getAttribute('href')).toBe(
+      '#/challenges/price-format?category=off-by-one',
+    );
   });
 
   it('offers the Next Challenge once Solved', async () => {

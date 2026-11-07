@@ -1,13 +1,5 @@
-import { useState } from 'react';
-import {
-  BUG_CATEGORIES,
-  DIFFICULTIES,
-  DIFFICULTY_LABELS,
-  compareChallenges,
-  type BugCategory,
-  type Challenge,
-  type Difficulty,
-} from '../catalog/challenge';
+import { BUG_CATEGORIES, DIFFICULTIES, DIFFICULTY_LABELS, compareChallenges, type Challenge } from '../catalog/challenge';
+import { matchesFilters, toFilters, type ChallengeFilters } from '../catalog/filters';
 import { ChallengeLabels } from '../components/ChallengeLabels';
 import { hintCount } from '../components/HintLadder';
 import { browserProgressStore, hintsUsedFor, type ProgressStore } from '../progress/progressStore';
@@ -16,20 +8,18 @@ import { challengeHref } from '../routing/routes';
 interface ChallengeListPageProps {
   challenges: Challenge[];
   progress?: ProgressStore;
+  /** The filters in effect; the app keeps them in the URL. */
+  filters: ChallengeFilters;
+  onFiltersChange: (filters: ChallengeFilters) => void;
 }
 
-/** A filter's value: one Difficulty, or '' for all of them. */
-type DifficultyFilter = Difficulty | '';
-/** A filter's value: one Bug Category, or '' for all of them. */
-type BugCategoryFilter = BugCategory | '';
-
-export function ChallengeListPage({ challenges, progress = browserProgressStore }: ChallengeListPageProps) {
-  const [difficulty, setDifficulty] = useState<DifficultyFilter>('');
-  const [bugCategory, setBugCategory] = useState<BugCategoryFilter>('');
-  const shown = challenges
-    .filter((challenge) => !difficulty || challenge.difficulty === difficulty)
-    .filter((challenge) => !bugCategory || challenge.bugCategory === bugCategory)
-    .sort(compareChallenges);
+export function ChallengeListPage({
+  challenges,
+  progress = browserProgressStore,
+  filters,
+  onFiltersChange,
+}: ChallengeListPageProps) {
+  const matching = challenges.filter((challenge) => matchesFilters(challenge, filters)).sort(compareChallenges);
 
   return (
     <main className="challenge-list-page">
@@ -37,7 +27,10 @@ export function ChallengeListPage({ challenges, progress = browserProgressStore 
       <div className="filters">
         <label>
           Difficulty
-          <select value={difficulty} onChange={(event) => setDifficulty(event.target.value as DifficultyFilter)}>
+          <select
+            value={filters.difficulty ?? ''}
+            onChange={(event) => onFiltersChange(toFilters({ ...filters, difficulty: event.target.value }))}
+          >
             <option value="">All</option>
             {DIFFICULTIES.map((value) => (
               <option key={value} value={value}>
@@ -48,7 +41,10 @@ export function ChallengeListPage({ challenges, progress = browserProgressStore 
         </label>
         <label>
           Bug Category
-          <select value={bugCategory} onChange={(event) => setBugCategory(event.target.value as BugCategoryFilter)}>
+          <select
+            value={filters.bugCategory ?? ''}
+            onChange={(event) => onFiltersChange(toFilters({ ...filters, bugCategory: event.target.value }))}
+          >
             <option value="">All</option>
             {Object.entries(BUG_CATEGORIES).map(([value, label]) => (
               <option key={value} value={value}>
@@ -58,15 +54,15 @@ export function ChallengeListPage({ challenges, progress = browserProgressStore 
           </select>
         </label>
       </div>
-      {shown.length === 0 ? (
+      {matching.length === 0 ? (
         <p className="list-empty">No Challenges match these filters. Try another Difficulty or Bug Category.</p>
       ) : (
         <ul className="challenge-list" aria-label="Challenges">
-          {shown.map((challenge) => {
+          {matching.map((challenge) => {
             const challengeProgress = progress.get(challenge.id);
             return (
               <li key={challenge.id} className="challenge-entry">
-                <a href={challengeHref(challenge.id)}>{challenge.title}</a>
+                <a href={challengeHref(challenge.id, filters)}>{challenge.title}</a>
                 <ChallengeLabels challenge={challenge} status={challengeProgress.status}>
                   {challengeProgress.status === 'solved' && (
                     <span className="hints-used">{hintCount(hintsUsedFor(challenge, challengeProgress) ?? 0)} used</span>
