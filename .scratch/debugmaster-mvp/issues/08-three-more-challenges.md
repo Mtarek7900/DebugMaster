@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] Three new Challenge folders exist, one per listed Bug Category, picked up with no code changes
-- [ ] Each has one bug in one file of about 20–80 lines of realistic code
-- [ ] Each Bug Report describes the symptom and how to reproduce it, never the bug's location
-- [ ] Each has Hidden Checks that reject a fix that just hard-codes the Visible Checks' expected values
-- [ ] Early Hints teach the method rather than the fix
-- [ ] The catalog integrity suite passes for all Challenges
+- [x] Three new Challenge folders exist, one per listed Bug Category, picked up with no code changes
+- [x] Each has one bug in one file of about 20–80 lines of realistic code
+- [x] Each Bug Report describes the symptom and how to reproduce it, never the bug's location
+- [x] Each has Hidden Checks that reject a fix that just hard-codes the Visible Checks' expected values
+- [x] Early Hints teach the method rather than the fix
+- [x] The catalog integrity suite passes for all Challenges
