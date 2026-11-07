@@ -34,7 +34,13 @@ function setUp(save) {
   const editor = pretendEditor();
   const clock = pretendClock();
   const saved = [];
-  const storage = { save: save ?? (async (text) => void saved.push(text)) };
+  // `saved` lists the texts that were saved successfully, whichever `save` is used.
+  const storage = {
+    save: async (text) => {
+      if (save) await save(text);
+      saved.push(text);
+    },
+  };
   const autosave = new Autosave(editor, storage, clock, 1000);
   return { editor, clock, saved, autosave };
 }

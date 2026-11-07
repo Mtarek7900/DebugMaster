@@ -8,6 +8,7 @@ function pretendSearchService() {
     searchProducts: (query) => new Promise((resolve) => waiting.push({ query, resolve })),
     async answer(query) {
       const index = waiting.findIndex((search) => search.query === query);
+      if (index === -1) throw new Error(`No search for "${query}" is waiting`);
       const [search] = waiting.splice(index, 1);
       search.resolve(PRODUCTS.filter((name) => name.includes(query)));
       await settle();

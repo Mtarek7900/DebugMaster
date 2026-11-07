@@ -1,5 +1,6 @@
 // The product search box in the shop's header. Each keystroke starts a new
-// search; the results list must always match what is in the box right now.
+// search; the results list must always match what is in the box right now,
+// so answers to searches that have since been replaced are ignored.
 
 const MIN_QUERY_LENGTH = 2;
 
@@ -29,7 +30,6 @@ export function createSearchBox(searchProducts) {
       failed = true;
     }
 
-    // A newer search has started since this one: its results are out of date.
     const thisSearch = searchCount;
     if (thisSearch !== searchCount) {
       return;

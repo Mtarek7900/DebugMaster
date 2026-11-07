@@ -49,7 +49,7 @@ if (thisSearch !== searchCount) {
 }
 ```
 
-Now the late `lap` answer has `thisSearch = 1` and `searchCount = 2`, so it's dropped. That covers results, the spinner and errors alike, because they're all set after the guard. Clearing the box adds 1 too, so an answer still on its way after the box is cleared is dropped as well. Comparing the answer's query with what is in the box now (`state.query.trim() !== query`) also works here. An `AbortController` that cancels the old request would work too, if the search service supported it.
+Now the late `lap` answer has `thisSearch = 1` and `searchCount = 2`, so it's dropped. That covers results, the spinner and errors alike, because they're all set after the guard. Clearing the box adds 1 too, so an answer still on its way after the box is cleared is dropped as well. Comparing the answer's query with what is in the box now (`state.query.trim() !== query`) also passes the checks. It is slightly weaker: if the Learner types `desk`, then `desk lamp`, then `desk` again, the first `desk` answer is accepted and turns the spinner off while the newest `desk` search is still running. An `AbortController` that cancels the old request would work too, if the search service supported it.
 
 ## Recognising async race bugs
 

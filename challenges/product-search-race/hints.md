@@ -4,7 +4,7 @@ Press **Run**. Two checks fail. Compare them with "answers in order show the res
 
 ## Read the evidence
 
-In the failing check, the box says `laptop` but shows the results for `lap`, which was the *last* answer to arrive, not the newest search. In the loading check, the spinner turns off as soon as *any* answer arrives. The code seems to accept every answer as if it were the newest.
+In "a slow answer for older text does not replace newer results", the box says `laptop` but shows the results for `lap`, which was the *last* answer to arrive, not the newest search. In the loading check, the spinner turns off as soon as *any* answer arrives. The code seems to accept every answer as if it were the newest.
 
 ## Narrow down
 
@@ -12,7 +12,7 @@ The code does have a guard meant to throw away out-of-date answers. Find it, the
 
 ## Form a theory
 
-`await` pauses `type` and lets other code run (more keystrokes, more searches) before it continues. Both values in the guard are read *after* the `await`. Can they ever be different at that point? What was `thisSearch` meant to remember, and *when* would it need to be read to remember it?
+`await` pauses `type` and lets other code run (more keystrokes, more searches) before it continues. What was `thisSearch` meant to remember? Compare *when* each value in the guard is read with when the `await` happens, and ask whether the two values can ever differ.
 
 ## Fix
 

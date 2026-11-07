@@ -12,7 +12,7 @@ Put a `console.log` inside `handleChange` to check it really runs when you type.
 
 ## Form a theory
 
-In JavaScript, `this` inside a regular function or method isn't fixed when the method is written: it's decided by **how the function is called**. `this.handleChange` is passed to the editor as a plain function. Look at how the pretend editor calls its listeners. What does that make `this`, and where do `this.dirty = true` and `this.latestText` end up?
+In JavaScript, `this` inside a regular function or method isn't fixed when the method is written: it's decided by **how the function is called**. Look at how `handleChange` reaches the editor, and how the pretend editor calls its listeners. What does that make `this`, and where do `this.dirty = true` and `this.latestText` end up?
 
 ## Fix
 

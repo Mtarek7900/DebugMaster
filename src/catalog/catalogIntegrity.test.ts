@@ -5,7 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { runChallenge } from '../runner/runChallenge';
 import { challenges, validateChallenge } from './catalog';
-import { BUG_CATEGORIES } from './challenge';
+import { BUG_CATEGORIES, DIFFICULTIES } from './challenge';
 
 describe('the Challenge Catalog', () => {
   it('contains at least one Challenge', () => {
@@ -13,8 +13,9 @@ describe('the Challenge Catalog', () => {
   });
 
   it('has 2 Challenges of each Difficulty', () => {
-    const count = (difficulty: string) => challenges.filter((c) => c.difficulty === difficulty).length;
-    expect({ easy: count('easy'), medium: count('medium'), hard: count('hard') }).toEqual({ easy: 2, medium: 2, hard: 2 });
+    for (const difficulty of DIFFICULTIES) {
+      expect(challenges.filter((c) => c.difficulty === difficulty).length, difficulty).toBe(2);
+    }
   });
 
   it('covers every Bug Category exactly once', () => {

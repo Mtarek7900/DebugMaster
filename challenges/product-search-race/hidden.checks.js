@@ -5,6 +5,7 @@ function pretendSearchService() {
   const waiting = [];
   const take = (query) => {
     const index = waiting.findIndex((search) => search.query === query);
+    if (index === -1) throw new Error(`No search for "${query}" is waiting`);
     return waiting.splice(index, 1)[0];
   };
   return {
