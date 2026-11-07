@@ -1,4 +1,11 @@
-import { BUG_CATEGORIES, DIFFICULTIES, DIFFICULTY_LABELS, compareChallenges, type Challenge } from '../catalog/challenge';
+import {
+  BUG_CATEGORIES,
+  DIFFICULTIES,
+  DIFFICULTY_LABELS,
+  compareChallenges,
+  plainLabel,
+  type Challenge,
+} from '../catalog/challenge';
 import { matchesFilters, toFilters, type ChallengeFilters } from '../catalog/filters';
 import { ChallengeLabels } from '../components/ChallengeLabels';
 import { hintCount } from '../components/HintLadder';
@@ -48,7 +55,7 @@ export function ChallengeListPage({
             <option value="">All</option>
             {Object.entries(BUG_CATEGORIES).map(([value, label]) => (
               <option key={value} value={value}>
-                {label}
+                {plainLabel(label)}
               </option>
             ))}
           </select>

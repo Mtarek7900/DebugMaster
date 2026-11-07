@@ -6,7 +6,7 @@
 
 **Status:** ready-for-agent
 
-- [ ] Desktop (≥ 1024px wide): a multi-panel Challenge page layout with the editor prominent and results/console visible without scrolling past the editor
-- [ ] Phone (~375px wide): a stacked order of Bug Report → editor → results → Hints → Walkthrough; no horizontal page scroll
-- [ ] The list page is readable at both widths, with filters usable on a phone
-- [ ] Existing page-level tests still pass
+- [x] Desktop (≥ 1024px wide): a multi-panel Challenge page layout with the editor prominent and results/console visible without scrolling past the editor
+- [x] Phone (~375px wide): a stacked order of Bug Report → editor → results → Hints → Walkthrough; no horizontal page scroll
+- [x] The list page is readable at both widths, with filters usable on a phone
+- [x] Existing page-level tests still pass

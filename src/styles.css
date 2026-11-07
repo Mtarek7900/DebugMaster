@@ -12,6 +12,13 @@
   --fail-bg: #fdecec;
   --warn: #9a6700;
   --code-bg: #f0f2f5;
+  --active-line: rgba(47, 111, 235, 0.06);
+  --selection: rgba(47, 111, 235, 0.2);
+  --syntax-keyword: #cf222e;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-comment: #6e7781;
+  --syntax-function: #8250df;
   --radius: 8px;
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
@@ -32,6 +39,13 @@
     --fail-bg: #2d1517;
     --warn: #d29922;
     --code-bg: #20262e;
+    --active-line: rgba(76, 141, 255, 0.08);
+    --selection: rgba(76, 141, 255, 0.3);
+    --syntax-keyword: #ff7b72;
+    --syntax-string: #a5d6ff;
+    --syntax-number: #79c0ff;
+    --syntax-comment: #8b949e;
+    --syntax-function: #d2a8ff;
   }
 }
 
@@ -76,11 +90,29 @@ code {
   margin: 0 auto;
 }
 
-@media (min-width: 900px) {
+/*
+ * Desktop: the Bug Report and Hints on the left, the editor prominent in the
+ * middle, Results and Console on the right, so everything is in view while
+ * working. Below 1024px the sections stack in their source (phone) order.
+ */
+@media (min-width: 1024px) {
   .challenge-page {
-    grid-template-columns: minmax(280px, 2fr) 3fr;
+    grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr) minmax(260px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'report workbench output'
+      'hints workbench output'
+      'walkthrough walkthrough walkthrough';
     align-items: start;
   }
+  .bug-report { grid-area: report; }
+  .workbench { grid-area: workbench; }
+  .output { grid-area: output; }
+  .hints-panel { grid-area: hints; }
+  .walkthrough { grid-area: walkthrough; }
+  /* The right column's headings start level with the editor. */
+  .output > h2:first-child,
+  .hints-panel > h2:first-child { margin-top: 0; }
 }
 
 .panel {
@@ -120,6 +152,16 @@ code {
 
 .difficulty-easy {
   color: var(--pass);
+  border-color: currentColor;
+}
+
+.difficulty-medium {
+  color: var(--warn);
+  border-color: currentColor;
+}
+
+.difficulty-hard {
+  color: var(--fail);
   border-color: currentColor;
 }
 

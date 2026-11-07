@@ -36,6 +36,11 @@ export const BUG_CATEGORIES = {
 } as const;
 export type BugCategory = keyof typeof BUG_CATEGORIES;
 
+/** A label without its Markdown code marks, for places that show plain text (such as a <select>). */
+export function plainLabel(label: string): string {
+  return label.replaceAll('`', '');
+}
+
 export interface Hint {
   /** The debugging-method step this Hint teaches, e.g. "Reproduce". */
   step: string;

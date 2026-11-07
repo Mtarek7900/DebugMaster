@@ -699,3 +699,25 @@ describe('ChallengePage navigation', () => {
     expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
   });
 });
+
+describe('ChallengePage layout', () => {
+  it('orders its sections Bug Report → code → Results → Hints → Walkthrough, as they stack on a phone', async () => {
+    const progress = createProgressStore();
+    progress.recordRevealed(challenge.id);
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={progress} />);
+
+    expect(screen.getAllByRole('region').map(regionName)).toEqual([
+      'Cart total is wrong',
+      'Your code',
+      'Results',
+      'Hints',
+      'Walkthrough',
+    ]);
+  });
+});
+
+/** A region's accessible name: its aria-label, or the text of the element its aria-labelledby points at. */
+function regionName(region: HTMLElement): string | null {
+  const labelledBy = region.getAttribute('aria-labelledby');
+  return labelledBy ? document.getElementById(labelledBy)!.textContent : region.getAttribute('aria-label');
+}
