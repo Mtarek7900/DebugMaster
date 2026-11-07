@@ -15,8 +15,8 @@ const highlightStyle = HighlightStyle.define([
   { tag: [tags.keyword, tags.operatorKeyword, tags.modifier], color: 'var(--syntax-keyword)' },
   { tag: [tags.string, tags.special(tags.string), tags.regexp], color: 'var(--syntax-string)' },
   { tag: [tags.number, tags.bool, tags.null, tags.atom], color: 'var(--syntax-number)' },
-  { tag: [tags.comment, tags.lineComment, tags.blockComment], color: 'var(--syntax-comment)', fontStyle: 'italic' },
-  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName), tags.definition(tags.function(tags.variableName))], color: 'var(--syntax-function)' },
+  { tag: tags.comment, color: 'var(--syntax-comment)', fontStyle: 'italic' },
+  { tag: [tags.function(tags.variableName), tags.function(tags.propertyName)], color: 'var(--syntax-function)' },
   { tag: [tags.className, tags.definition(tags.className)], color: 'var(--syntax-function)' },
 ]);
 

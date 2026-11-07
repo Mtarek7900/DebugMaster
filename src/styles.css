@@ -98,7 +98,7 @@ code {
 @media (min-width: 1024px) {
   .challenge-page {
     grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr) minmax(260px, 1fr);
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto 1fr auto;
     grid-template-areas:
       'report workbench output'
       'hints workbench output'
@@ -110,9 +110,13 @@ code {
   .output { grid-area: output; }
   .hints-panel { grid-area: hints; }
   .walkthrough { grid-area: walkthrough; }
-  /* The right column's headings start level with the editor. */
-  .output > h2:first-child,
-  .hints-panel > h2:first-child { margin-top: 0; }
+}
+
+/* A panel that opens with its heading starts it at the panel's edge, like the Bug Report. */
+.output > h2:first-child,
+.hints-panel > h2:first-child,
+.walkthrough > h2:first-child {
+  margin-top: 0;
 }
 
 .panel {

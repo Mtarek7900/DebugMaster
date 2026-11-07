@@ -721,3 +721,20 @@ function regionName(region: HTMLElement): string | null {
   const labelledBy = region.getAttribute('aria-labelledby');
   return labelledBy ? document.getElementById(labelledBy)!.textContent : region.getAttribute('aria-label');
 }
+
+describe('ChallengePage Give Up scrolling', () => {
+  it('brings the Walkthrough into view after Give Up, since on desktop it opens below the fold', async () => {
+    const scrolled: Element[] = [];
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Give up and show the Walkthrough' }));
+
+    expect(scrolled).toEqual([screen.getByRole('region', { name: 'Walkthrough' })]);
+    delete (Element.prototype as Partial<Element>).scrollIntoView;
+  });
+});
