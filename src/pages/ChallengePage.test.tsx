@@ -713,7 +713,7 @@ describe('ChallengePage navigation', () => {
 });
 
 describe('ChallengePage layout', () => {
-  it('orders its sections Bug Report → code → Results → Hints → Walkthrough, as they stack on a phone', async () => {
+  it('orders its sections Bug Report → code and Console → Results → Hints → Walkthrough, as they stack on a phone', async () => {
     const progress = createProgressStore();
     progress.recordRevealed(challenge.id);
     render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={progress} />);
@@ -725,6 +725,16 @@ describe('ChallengePage layout', () => {
       'Hints',
       'Walkthrough',
     ]);
+  });
+
+  it('shows the Console with the code, below the editor, and keeps only Results in the Results section', () => {
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
+
+    const code = screen.getByRole('region', { name: 'Your code' });
+    const consolePanel = within(code).getByRole('log', { name: 'Console' });
+    const editor = code.querySelector('.code-editor')!;
+    expect(editor.compareDocumentPosition(consolePanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(screen.getByRole('region', { name: 'Results' })).queryByRole('log')).toBeNull();
   });
 });
 
