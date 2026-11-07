@@ -8,20 +8,15 @@ import {
   type Challenge,
   type Difficulty,
 } from '../catalog/challenge';
+import { ChallengeLabels } from '../components/ChallengeLabels';
 import { hintCount } from '../components/HintLadder';
-import { browserProgressStore, type ChallengeStatus, type ProgressStore } from '../progress/progressStore';
+import { browserProgressStore, hintsRevealedFor, type ProgressStore } from '../progress/progressStore';
 import { challengeHref } from '../routing/routes';
 
 interface ChallengeListPageProps {
   challenges: Challenge[];
   progress?: ProgressStore;
 }
-
-const STATUS_LABELS: Record<ChallengeStatus, string> = {
-  unattempted: 'Not started',
-  solved: 'Solved',
-  revealed: 'Revealed',
-};
 
 /** A filter's value: one Difficulty, or '' for all of them. */
 type DifficultyFilter = Difficulty | '';
@@ -68,20 +63,15 @@ export function ChallengeListPage({ challenges, progress = browserProgressStore 
       ) : (
         <ul className="challenge-list" aria-label="Challenges">
           {shown.map((challenge) => {
-            const { status, hintsRevealed } = progress.get(challenge.id);
+            const challengeProgress = progress.get(challenge.id);
             return (
               <li key={challenge.id} className="challenge-entry">
                 <a href={challengeHref(challenge.id)}>{challenge.title}</a>
-                <div className="labels">
-                  <span className={`label difficulty-${challenge.difficulty}`}>
-                    {DIFFICULTY_LABELS[challenge.difficulty]}
-                  </span>
-                  <span className="label">{BUG_CATEGORIES[challenge.bugCategory]}</span>
-                  <span className={`label status-${status}`}>{STATUS_LABELS[status]}</span>
-                  {status === 'solved' && (
-                    <span className="hints-used">{hintCount(Math.min(hintsRevealed, challenge.hints.length))} used</span>
+                <ChallengeLabels challenge={challenge} status={challengeProgress.status}>
+                  {challengeProgress.status === 'solved' && (
+                    <span className="hints-used">{hintCount(hintsRevealedFor(challenge, challengeProgress))} used</span>
                   )}
-                </div>
+                </ChallengeLabels>
               </li>
             );
           })}

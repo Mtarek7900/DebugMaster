@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
+import type { Challenge } from '../catalog/challenge';
+import { ChallengeLabels } from '../components/ChallengeLabels';
 import { CodeEditor } from '../components/CodeEditor';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { ConsolePanel } from '../components/ConsolePanel';
 import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
-import { browserProgressStore, type ChallengeStatus, type ProgressStore } from '../progress/progressStore';
+import { browserProgressStore, hintsRevealedFor, type ProgressStore } from '../progress/progressStore';
 import { challengeHref, LIST_HREF } from '../routing/routes';
 import type { RunMode, Runner, RunResult } from '../runner/runner';
 
@@ -17,8 +18,6 @@ interface ChallengePageProps {
   /** The Challenge after this one in list order; none on the last. */
   nextChallenge?: Challenge;
 }
-
-const STATUS_LABELS: Partial<Record<ChallengeStatus, string>> = { solved: 'Solved', revealed: 'Revealed' };
 
 export function ChallengePage({
   challenge,
@@ -37,7 +36,7 @@ export function ChallengePage({
   const [running, setRunning] = useState(false);
   const [initialProgress] = useState(() => progress.get(challenge.id));
   const [status, setStatus] = useState(initialProgress.status);
-  const [hintsRevealed, setHintsRevealed] = useState(Math.min(initialProgress.hintsRevealed, challenge.hints.length));
+  const [hintsRevealed, setHintsRevealed] = useState(hintsRevealedFor(challenge, initialProgress));
   /** Set when the latest Submit passed every check: what that Submit meant for the Challenge. */
   const [passedAll, setPassedAll] = useState<PassedAll | null>(null);
 
@@ -82,11 +81,8 @@ export function ChallengePage({
           ← All Challenges
         </a>
         <h1 id="challenge-title">{challenge.title}</h1>
-        <div className="labels">
-          <span className={`label difficulty-${challenge.difficulty}`}>{DIFFICULTY_LABELS[challenge.difficulty]}</span>
-          <span className="label">{BUG_CATEGORIES[challenge.bugCategory]}</span>
-          {STATUS_LABELS[status] && <span className={`label status-${status}`}>{STATUS_LABELS[status]}</span>}
-        </div>
+        {/* An unattempted Challenge needs no status label while the Learner is on it. */}
+        <ChallengeLabels challenge={challenge} status={status === 'unattempted' ? undefined : status} />
         <h2>Bug Report</h2>
         <Markdown className="prose" source={challenge.bugReport} />
         <h2>Hints</h2>

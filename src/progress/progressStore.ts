@@ -13,7 +13,15 @@
  * saving or clearing code never touches the status or Hint count.
  */
 
+import type { Challenge } from '../catalog/challenge';
+
 export type ChallengeStatus = 'unattempted' | 'solved' | 'revealed';
+
+export const STATUS_LABELS: Record<ChallengeStatus, string> = {
+  unattempted: 'Not started',
+  solved: 'Solved',
+  revealed: 'Revealed',
+};
 
 export interface ChallengeProgress {
   status: ChallengeStatus;
@@ -35,6 +43,11 @@ export interface ProgressStore {
   saveCode(challengeId: string, code: string): void;
   /** Call on Reset: forgets the saved code, so the Challenge opens on its Broken Code again. */
   clearCode(challengeId: string): void;
+}
+
+/** How many of the Challenge's Hints count as revealed: the stored count, never more than the Challenge has. */
+export function hintsRevealedFor(challenge: Pick<Challenge, 'hints'>, progress: ChallengeProgress): number {
+  return Math.min(progress.hintsRevealed, challenge.hints.length);
 }
 
 const KEY_PREFIX = 'debugmaster:progress:';
