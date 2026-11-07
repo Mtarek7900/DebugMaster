@@ -1,23 +1,34 @@
 import { useEffect, useRef, useState } from 'react';
-import { BUG_CATEGORIES, DIFFICULTY_LABELS, type Challenge } from '../catalog/challenge';
+import type { Challenge } from '../catalog/challenge';
+import type { ChallengeFilters } from '../catalog/filters';
+import { ChallengeLabels } from '../components/ChallengeLabels';
 import { CodeEditor } from '../components/CodeEditor';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { ConsolePanel } from '../components/ConsolePanel';
 import { HintLadder, hintCount } from '../components/HintLadder';
 import { Markdown } from '../components/Markdown';
 import { ResultsPanel } from '../components/ResultsPanel';
-import { browserProgressStore, type ChallengeStatus, type ProgressStore } from '../progress/progressStore';
+import { browserProgressStore, hintsRevealedFor, hintsUsedFor, type ProgressStore } from '../progress/progressStore';
+import { challengeHref, listHref } from '../routing/routes';
 import type { RunMode, Runner, RunResult } from '../runner/runner';
 
 interface ChallengePageProps {
   challenge: Challenge;
   runner: Runner;
   progress?: ProgressStore;
+  /** The Challenge after this one in list order, among those matching `filters`; none on the last. */
+  nextChallenge?: Challenge;
+  /** The list filters this Challenge was opened under, kept in its links. */
+  filters?: ChallengeFilters;
 }
 
-const STATUS_LABELS: Partial<Record<ChallengeStatus, string>> = { solved: 'Solved', revealed: 'Revealed' };
-
-export function ChallengePage({ challenge, runner, progress = browserProgressStore }: ChallengePageProps) {
+export function ChallengePage({
+  challenge,
+  runner,
+  progress = browserProgressStore,
+  nextChallenge,
+  filters = {},
+}: ChallengePageProps) {
   /** The code the editor opens with; Reset swaps in the Broken Code and a fresh editor. */
   const [editorStart, setEditorStart] = useState(() => ({
     code: progress.getCode(challenge.id) ?? challenge.brokenCode,
@@ -29,7 +40,7 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
   const [running, setRunning] = useState(false);
   const [initialProgress] = useState(() => progress.get(challenge.id));
   const [status, setStatus] = useState(initialProgress.status);
-  const [hintsRevealed, setHintsRevealed] = useState(Math.min(initialProgress.hintsRevealed, challenge.hints.length));
+  const [hintsRevealed, setHintsRevealed] = useState(hintsRevealedFor(challenge, initialProgress));
   /** Set when the latest Submit passed every check: what that Submit meant for the Challenge. */
   const [passedAll, setPassedAll] = useState<PassedAll | null>(null);
 
@@ -57,10 +68,14 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
       const next = await runner(challenge, code.current, mode);
       setResult(next);
       if (mode === 'submit' && passedEveryCheck(next)) {
-        const newStatus = progress.recordSolved(challenge.id).status;
-        setStatus(newStatus);
+        const solved = progress.recordSolved(challenge.id);
+        setStatus(solved.status);
         // A Revealed Challenge stays Revealed: announce that the checks pass, not Solved.
-        setPassedAll(newStatus === 'solved' ? { status: 'solved', hintsUsed: hintsRevealed } : { status: 'revealed' });
+        setPassedAll(
+          solved.status === 'solved'
+            ? { status: 'solved', hintsUsed: hintsUsedFor(challenge, solved) ?? 0 }
+            : { status: 'revealed' },
+        );
       }
     } finally {
       setRunning(false);
@@ -70,12 +85,12 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
   return (
     <main className="challenge-page">
       <section className="panel bug-report" aria-labelledby="challenge-title">
+        <a className="back-link" href={listHref(filters)}>
+          ← Back to Challenges
+        </a>
         <h1 id="challenge-title">{challenge.title}</h1>
-        <div className="labels">
-          <span className={`label difficulty-${challenge.difficulty}`}>{DIFFICULTY_LABELS[challenge.difficulty]}</span>
-          <span className="label">{BUG_CATEGORIES[challenge.bugCategory]}</span>
-          {STATUS_LABELS[status] && <span className={`label status-${status}`}>{STATUS_LABELS[status]}</span>}
-        </div>
+        {/* An unattempted Challenge needs no status label while the Learner is on it. */}
+        <ChallengeLabels challenge={challenge} status={status === 'unattempted' ? undefined : status} />
         <h2>Bug Report</h2>
         <Markdown className="prose" source={challenge.bugReport} />
         <h2>Hints</h2>
@@ -136,6 +151,12 @@ export function ChallengePage({ challenge, runner, progress = browserProgressSto
             Your fix passes every Visible and Hidden Check. The Challenge stays Revealed because you gave up.
           </p>
         )}
+        {/* Once the attempt is over, Solved or Revealed, the Learner can move on. */}
+        {status !== 'unattempted' && nextChallenge && (
+          <a className="button primary next-challenge" href={challengeHref(nextChallenge.id, filters)}>
+            Next Challenge: {nextChallenge.title} →
+          </a>
+        )}
         <h2>Results</h2>
         <ResultsPanel result={result} running={running} />
         <h2>Console</h2>
@@ -195,7 +216,7 @@ function useAutosave(save: (value: string) => void) {
 
 /**
  * What a Submit that passed every check meant: Solved, with the Hints used for
- * that solve (later reveals do not change it), or still Revealed after Give Up.
+ * the first Solve (later reveals do not change it), or still Revealed after Give Up.
  */
 type PassedAll = { status: 'solved'; hintsUsed: number } | { status: 'revealed' };
 

@@ -611,7 +611,7 @@ describe('ChallengePage autosave and Reset', () => {
 
     expect(screen.getByText('Revealed')).toBeTruthy();
     expect(screen.getByText('No Hints remaining')).toBeTruthy();
-    expect(progress.get(challenge.id)).toEqual({ status: 'revealed', hintsRevealed: 3 });
+    expect(progress.get(challenge.id)).toEqual({ status: 'revealed', hintsRevealed: 3, hintsUsed: null });
   });
 
   it('keeps edits and Reset working for the session when browser storage throws', async () => {
@@ -636,5 +636,66 @@ describe('ChallengePage autosave and Reset', () => {
 
     render(<ChallengePage challenge={challenge} runner={runner} progress={progress} />);
     expect(editor().state.doc.toString()).toBe(challenge.brokenCode);
+  });
+});
+
+describe('ChallengePage navigation', () => {
+  const next: Challenge = { ...challenge, id: 'price-format', title: 'Prices show too many decimals' };
+
+  it('links back to the Challenge list', () => {
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} />);
+
+    expect(screen.getByRole('link', { name: /Back to Challenges/ }).getAttribute('href')).toBe('#/');
+  });
+
+  it('keeps the filters the Challenge was opened under in its links', async () => {
+    render(
+      <ChallengePage
+        challenge={challenge}
+        runner={passingSubmit}
+        progress={createProgressStore()}
+        nextChallenge={next}
+        filters={{ bugCategory: 'off-by-one' }}
+      />,
+    );
+
+    expect(screen.getByRole('link', { name: /Back to Challenges/ }).getAttribute('href')).toBe('#/?category=off-by-one');
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    expect((await screen.findByRole('link', { name: /Next Challenge/ })).getAttribute('href')).toBe(
+      '#/challenges/price-format?category=off-by-one',
+    );
+  });
+
+  it('offers the Next Challenge once Solved', async () => {
+    render(
+      <ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} nextChallenge={next} />,
+    );
+    expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    const link = await screen.findByRole('link', { name: /Next Challenge/ });
+    expect(link.getAttribute('href')).toBe('#/challenges/price-format');
+    expect(link.textContent).toContain('Prices show too many decimals');
+  });
+
+  it('offers the Next Challenge once Revealed', async () => {
+    render(<ChallengePage challenge={challenge} runner={vi.fn()} progress={createProgressStore()} nextChallenge={next} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Give Up' }));
+    const confirmation = screen.getByRole('alertdialog', { name: 'Give up?' });
+    await userEvent.click(within(confirmation).getByRole('button', { name: 'Give up and show the Walkthrough' }));
+
+    const link = screen.getByRole('link', { name: /Next Challenge/ });
+    expect(link.getAttribute('href')).toBe('#/challenges/price-format');
+  });
+
+  it('offers no Next Challenge on the last Challenge', async () => {
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={createProgressStore()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }));
+
+    await screen.findByRole('status');
+    expect(screen.queryByRole('link', { name: /Next Challenge/ })).toBeNull();
   });
 });

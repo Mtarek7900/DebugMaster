@@ -54,6 +54,10 @@ _Avoid_: Solution, answer, explanation
 A developer working through Challenges.
 _Avoid_: User, student, player
 
+**Not started**:
+The state of a Challenge that is neither Solved nor Revealed, even if the Learner has edited its code or revealed Hints. Every Challenge is in exactly one of three states: Not started, Solved or Revealed.
+_Avoid_: Unattempted, new, to do, in progress
+
 **Solved**:
 The state of a Challenge once the Learner's fix passes all its Visible and Hidden Checks without the Walkthrough having been revealed.
 _Avoid_: Complete, done, passed
