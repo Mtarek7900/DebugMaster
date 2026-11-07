@@ -6,8 +6,8 @@
 
 **Status:** ready-for-agent
 
-- [ ] Two new hard Challenge folders exist: async race and `this` binding
-- [ ] Each has one bug in one file of about 20–80 lines of realistic code
-- [ ] The async-race Challenge's checks are deterministic (no flaky timing; controlled delays or ordering)
-- [ ] Hidden Checks reject fixes that only satisfy the Visible Checks
-- [ ] The catalog integrity suite passes for all 6 Challenges, with 2 per Difficulty and 6 distinct Bug Categories
+- [x] Two new hard Challenge folders exist: async race and `this` binding
+- [x] Each has one bug in one file of about 20–80 lines of realistic code
+- [x] The async-race Challenge's checks are deterministic (no flaky timing; controlled delays or ordering)
+- [x] Hidden Checks reject fixes that only satisfy the Visible Checks
+- [x] The catalog integrity suite passes for all 6 Challenges, with 2 per Difficulty and 6 distinct Bug Categories
