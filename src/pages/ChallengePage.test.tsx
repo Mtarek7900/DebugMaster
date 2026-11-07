@@ -407,7 +407,7 @@ describe('ChallengePage Give Up', () => {
     expect(screen.queryByRole('alertdialog')).toBeNull();
     expect(screen.queryByRole('region', { name: 'Walkthrough' })).toBeNull();
     expect(screen.queryByText('Revealed')).toBeNull();
-    expect(progress.get(challenge.id).status).toBe('unattempted');
+    expect(progress.get(challenge.id).status).toBe('not-started');
     expect(screen.getByRole('button', { name: 'Give Up' })).toBeTruthy();
   });
 
@@ -478,6 +478,18 @@ describe('ChallengePage Give Up', () => {
     render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
 
     expect(screen.getByText('Revealed')).toBeTruthy();
+  });
+});
+
+describe('ChallengePage saved progress from before "not started"', () => {
+  it('reads a saved "unattempted" Challenge as not started, keeping its Hints', () => {
+    localStorage.setItem('debugmaster:progress:cart-total', JSON.stringify({ status: 'unattempted', hintsRevealed: 2 }));
+    const progress = createProgressStore();
+    render(<ChallengePage challenge={challenge} runner={passingSubmit} progress={progress} />);
+
+    expect(progress.get(challenge.id)).toEqual({ status: 'not-started', hintsRevealed: 2, hintsUsed: null });
+    expect(within(screen.getByRole('list', { name: 'Revealed Hints' })).getAllByRole('listitem')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Give Up' })).toBeTruthy();
   });
 });
 

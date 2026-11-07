@@ -9,16 +9,16 @@
  * Each Challenge keeps its status, how many Hints were revealed, how many of
  * them had been revealed when it was first Solved, and the Learner's current code (kept apart, since it changes with every keystroke).
  * Rules: Solved is recorded only when the status is not already Revealed, and only the first Solve sets the Hints used;
- * Revealed is recorded only for an unattempted Challenge and is permanent once set; the Hint count never exceeds the Challenge's Hints;
+ * Revealed is recorded only for a Challenge not started yet and is permanent once set; the Hint count never exceeds the Challenge's Hints;
  * saving or clearing code never touches the status or Hint count.
  */
 
 import type { Challenge } from '../catalog/challenge';
 
-export type ChallengeStatus = 'unattempted' | 'solved' | 'revealed';
+export type ChallengeStatus = 'not-started' | 'solved' | 'revealed';
 
 export const STATUS_LABELS: Record<ChallengeStatus, string> = {
-  unattempted: 'Not started',
+  'not-started': 'Not started',
   solved: 'Solved',
   revealed: 'Revealed',
 };
@@ -38,7 +38,7 @@ export interface ProgressStore {
    * exactly as it was (so the Hints used stay those of the first Solve); returns the progress afterwards.
    */
   recordSolved(challengeId: string): ChallengeProgress;
-  /** Call when the Learner confirms Give Up. Only an unattempted Challenge becomes Revealed; returns the progress afterwards. */
+  /** Call when the Learner confirms Give Up. Only a Challenge not started yet becomes Revealed; returns the progress afterwards. */
   recordRevealed(challengeId: string): ChallengeProgress;
   /** Call when the Learner reveals their next Hint; never counts past `hintCount`. Returns the progress afterwards. */
   recordHintRevealed(challengeId: string, hintCount: number): ChallengeProgress;
@@ -62,8 +62,8 @@ export function hintsRevealedFor(challenge: Pick<Challenge, 'hints'>, progress: 
 
 const KEY_PREFIX = 'debugmaster:progress:';
 const CODE_KEY_PREFIX = 'debugmaster:code:';
-const STATUSES: readonly ChallengeStatus[] = ['unattempted', 'solved', 'revealed'];
-const UNATTEMPTED: ChallengeProgress = { status: 'unattempted', hintsRevealed: 0, hintsUsed: null };
+const STATUSES: readonly ChallengeStatus[] = ['not-started', 'solved', 'revealed'];
+const NOT_STARTED: ChallengeProgress = { status: 'not-started', hintsRevealed: 0, hintsUsed: null };
 
 export function createProgressStore(): ProgressStore {
   /** Progress that storage could not keep; it wins over storage for the rest of the session. */
@@ -78,7 +78,7 @@ export function createProgressStore(): ProgressStore {
       // `localStorage` is read inside the try: merely reaching it can throw when site data is blocked.
       return parse(window.localStorage.getItem(KEY_PREFIX + challengeId));
     } catch {
-      return UNATTEMPTED;
+      return NOT_STARTED;
     }
   }
 
@@ -122,7 +122,7 @@ export function createProgressStore(): ProgressStore {
     },
     recordSolved(challengeId) {
       const current = get(challengeId);
-      if (current.status !== 'unattempted') return current;
+      if (current.status !== 'not-started') return current;
       const next: ChallengeProgress = { ...current, status: 'solved', hintsUsed: current.hintsRevealed };
       save(challengeId, next);
       return next;
@@ -130,7 +130,7 @@ export function createProgressStore(): ProgressStore {
     recordRevealed(challengeId) {
       const current = get(challengeId);
       // Revealed is permanent, and a Solved Challenge keeps its Solved.
-      if (current.status !== 'unattempted') return current;
+      if (current.status !== 'not-started') return current;
       const next: ChallengeProgress = { ...current, status: 'revealed' };
       save(challengeId, next);
       return next;
@@ -145,17 +145,20 @@ export function createProgressStore(): ProgressStore {
   };
 }
 
-/** Reads a stored entry, treating anything missing or malformed as unattempted with no Hints revealed. */
+/**
+ * Reads a stored entry, treating anything missing or malformed as not started with no Hints revealed.
+ * That includes the status "unattempted", which progress saved before the rename to "not started" uses.
+ */
 function parse(raw: string | null): ChallengeProgress {
-  if (raw === null) return UNATTEMPTED;
+  if (raw === null) return NOT_STARTED;
   let value: { status?: unknown; hintsRevealed?: unknown; hintsUsed?: unknown } | null;
   try {
     value = JSON.parse(raw);
   } catch {
-    return UNATTEMPTED;
+    return NOT_STARTED;
   }
-  if (typeof value !== 'object' || value === null) return UNATTEMPTED;
-  const status = STATUSES.includes(value.status as ChallengeStatus) ? (value.status as ChallengeStatus) : 'unattempted';
+  if (typeof value !== 'object' || value === null) return NOT_STARTED;
+  const status = STATUSES.includes(value.status as ChallengeStatus) ? (value.status as ChallengeStatus) : 'not-started';
   const hintsRevealed = count(value.hintsRevealed) ?? 0;
   // Progress saved before the Hints used were kept falls back to the Hints revealed.
   const hintsUsed = status === 'solved' ? (count(value.hintsUsed) ?? hintsRevealed) : null;

@@ -99,8 +99,8 @@ export function ChallengePage({
           ← Back to Challenges
         </a>
         <h1 id="challenge-title">{challenge.title}</h1>
-        {/* An unattempted Challenge needs no status label while the Learner is on it. */}
-        <ChallengeLabels challenge={challenge} status={status === 'unattempted' ? undefined : status} />
+        {/* A Challenge not started yet needs no status label while the Learner is on it. */}
+        <ChallengeLabels challenge={challenge} status={status === 'not-started' ? undefined : status} />
         <h2>Bug Report</h2>
         <Markdown className="prose" source={challenge.bugReport} />
       </section>
@@ -121,7 +121,7 @@ export function ChallengePage({
           <button type="button" className="button primary" onClick={() => start('submit')} disabled={running}>
             Submit
           </button>
-          {status === 'unattempted' && (
+          {status === 'not-started' && (
             <ConfirmButton
               label="Give Up"
               question="Give up?"
@@ -156,7 +156,7 @@ export function ChallengePage({
           </p>
         )}
         {/* Once the attempt is over, Solved or Revealed, the Learner can move on. */}
-        {status !== 'unattempted' && nextChallenge && (
+        {status !== 'not-started' && nextChallenge && (
           <a className="button primary next-challenge" href={challengeHref(nextChallenge.id, filters)}>
             Next Challenge: {nextChallenge.title} →
           </a>
@@ -176,7 +176,7 @@ export function ChallengePage({
         <HintLadder hints={challenge.hints} revealed={hintsRevealed} onRevealNext={revealNextHint} />
       </section>
 
-      {status !== 'unattempted' && (
+      {status !== 'not-started' && (
         <section className="panel walkthrough" aria-labelledby="walkthrough-title" ref={walkthrough}>
           <h2 id="walkthrough-title">Walkthrough</h2>
           <Markdown className="prose" source={challenge.walkthrough} />
