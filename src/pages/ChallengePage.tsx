@@ -161,14 +161,15 @@ export function ChallengePage({
             Next Challenge: {nextChallenge.title} →
           </a>
         )}
+        {/* Right under the editor, so what the code logs is in view while working on it. */}
+        <h2>Console</h2>
+        <ConsolePanel entries={running ? null : (result?.console ?? null)} />
       </section>
 
       {/* Sections are in phone order: they stack as written there, and the desktop grid places them in columns. */}
       <section className="panel output" aria-labelledby="results-title">
         <h2 id="results-title">Results</h2>
         <ResultsPanel result={result} running={running} />
-        <h2>Console</h2>
-        <ConsolePanel entries={running ? null : (result?.console ?? null)} />
       </section>
 
       <section className="panel hints-panel" aria-labelledby="hints-title">
