@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 (Console, errors, timeouts and async code), 03 (Submit, Hidden Checks and Solved)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Two new hard Challenge folders exist: async race and `this` binding
 - [x] Each has one bug in one file of about 20–80 lines of realistic code

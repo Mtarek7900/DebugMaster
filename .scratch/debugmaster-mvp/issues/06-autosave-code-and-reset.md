@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (Submit, Hidden Checks and Solved)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Editor changes are saved per Challenge in the Progress Store as the Learner types (debounced is fine)
 - [x] Reopening or reloading a Challenge restores the saved code instead of the Broken Code
