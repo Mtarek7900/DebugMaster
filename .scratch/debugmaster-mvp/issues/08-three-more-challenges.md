@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (Submit, Hidden Checks and Solved)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Three new Challenge folders exist, one per listed Bug Category, picked up with no code changes
 - [x] Each has one bug in one file of about 20–80 lines of realistic code

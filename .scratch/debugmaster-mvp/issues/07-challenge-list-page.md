@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 (Hints), 05 (Give Up and Revealed)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The site has a list route (the home page) and a Challenge route per Challenge id; navigation works on a static host (no server routing needed)
 - [x] The list is ordered by Difficulty and shows title, Difficulty, Bug Category, status and the Hint count on Solved

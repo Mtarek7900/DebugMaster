@@ -13,3 +13,7 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the "Label in our tracker" column to match whatever vocabulary you actually use.
+
+## Closed state
+
+`done` is not one of the five triage roles. It marks an issue that has been built and merged, so the tracker shows what is still open. Set `**Status:** done` once the issue's PR is merged.

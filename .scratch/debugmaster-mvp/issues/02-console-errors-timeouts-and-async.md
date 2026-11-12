@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 (Run one Challenge in the browser)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The Runner result includes captured console output, in order, with objects and arrays formatted readably
 - [x] The Runner result reports a "threw" outcome with the error message when the Learner's code or a check throws

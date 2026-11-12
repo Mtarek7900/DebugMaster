@@ -4,7 +4,7 @@
 
 **Blocked by:** 05 (Give Up and Revealed), 06 (Autosave code and Reset), 07 (Challenge list page)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Desktop (≥ 1024px wide): a multi-panel Challenge page layout with the editor prominent and results/console visible without scrolling past the editor
 - [x] Phone (~375px wide): a stacked order of Bug Report → editor → results → Hints → Walkthrough; no horizontal page scroll
