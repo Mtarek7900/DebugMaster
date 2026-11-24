@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (Submit, Hidden Checks and Solved)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The Challenge page has a Give Up button that asks for confirmation; cancelling changes nothing
 - [x] Confirming opens the Walkthrough and sets the status to Revealed in the Progress Store

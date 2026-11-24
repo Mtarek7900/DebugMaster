@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 (Submit, Hidden Checks and Solved)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The Challenge page shows a Hint ladder: a "Reveal next Hint" control and the Hints revealed so far, in order
 - [x] The page shows how many Hints remain; the control is disabled once all are revealed

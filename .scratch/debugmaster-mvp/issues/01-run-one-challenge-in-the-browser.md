@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] The project is scaffolded as a static Vite + React + TypeScript app with Vitest; `dev`, `build` and `test` scripts work
 - [x] The Challenge Catalog loads every Challenge folder (metadata and Bug Report, Broken Code, Reference Fix, Visible Checks, Hidden Checks, Hints, Walkthrough) into typed Challenges without code changes per Challenge
