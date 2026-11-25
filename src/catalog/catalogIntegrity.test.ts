@@ -12,10 +12,10 @@ describe('the Challenge Catalog', () => {
     expect(challenges.length).toBeGreaterThan(0);
   });
 
-  it('has 2 Challenges of each Difficulty', () => {
-    for (const difficulty of DIFFICULTIES) {
-      expect(challenges.filter((c) => c.difficulty === difficulty).length, difficulty).toBe(2);
-    }
+  it('has the same number of Challenges at each Difficulty', () => {
+    const counts = DIFFICULTIES.map((difficulty) => challenges.filter((c) => c.difficulty === difficulty).length);
+    expect(counts[0]).toBeGreaterThanOrEqual(2);
+    expect(new Set(counts).size, `easy, medium, hard: ${counts.join(', ')}`).toBe(1);
   });
 
   it('covers every Bug Category exactly once', () => {

@@ -33,6 +33,12 @@ export const BUG_CATEGORIES = {
   'closure-in-loop': 'Closure in a loop',
   'async-race': 'Async race',
   'this-binding': '`this` binding',
+  'falsy-default': 'Falsy default',
+  'default-sort': 'Default sort order',
+  'mutation-during-iteration': 'Changing a list while looping',
+  'reference-equality': 'Reference equality',
+  'missing-await': 'Missing `await`',
+  'global-regex': 'Global regex state',
 } as const;
 export type BugCategory = keyof typeof BUG_CATEGORIES;
 
